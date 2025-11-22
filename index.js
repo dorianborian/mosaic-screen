@@ -1,24 +1,37 @@
 /**
  * @file Main file for Mosaic Screen! Your friendly neopixel screen controller
  */
-const { createCanvas, loadImage } = require("canvas");
+const { Canvas, loadImage } = require("skia-canvas");
+const createCanvas = (w, h) => new Canvas(w, h);
 const fs = require('fs');
 const path = require('path');
-const SerialPort = require("serialport");
+let ws281x;
+try {
+  ws281x = require('rpi-ws281x-native');
+} catch (err) {
+  console.log('Running in dev mode - GPIO disabled');
+  ws281x = {
+    init: () => {},
+    setBrightness: () => {},
+    render: () => {},
+    reset: () => {}
+  };
+}
 const { _extend } = require('util');
 const { exec } = require("child_process");
 const options = {
-  port: "/dev/ttyACM0",
-  baudRate: 115200,
+  gpio: 18,
+  leds: 225,
+  brightness: 100,
+  stripType: ws281x.stripType.WS2812
 };
 
-const END_FRAME = 255;
 const FRAME_RATE = 60; // In Frame updates per second
 const FRAME_RATE_TIME = Math.round(1000 / FRAME_RATE);
 const animPath = path.join(__dirname, 'images', 'animations');
 const width = 15;
 const height = 15;
-let brightFrame = null;
+let pixelData = new Uint32Array(225);
 const serverPort = 80;
 const canvas = createCanvas(width, height);
 const ctx = canvas.getContext("2d", { antialias: "none" });
@@ -511,99 +524,84 @@ function HSVtoRGB(h, s, v) {
 // =============== Init Serial connection and frame sending ====================
 // =============================================================================
 
-// Set the brightness of the pixels on the arduino with a byte sequence.
+// Set the brightness of the pixels directly via GPIO.
 function setBrightness(level) {
   let bLevel = parseInt(level, 10);
-  bLevel = bLevel > 254 ? 254 : bLevel;
+  bLevel = bLevel > 255 ? 255 : bLevel;
   bLevel = bLevel < 0 ? 0 : bLevel;
 
-  brightFrame = [END_FRAME, END_FRAME, bLevel];
+  ws281x.setBrightness(bLevel);
   return bLevel;
 }
 
-// Weave through all pixels on the canvas and generate a byte array for writing.
-function getFrameData() {
-  // Override get frame to set brightness when it exists.
-  if (brightFrame) {
-    const temp = [...brightFrame];
-    brightFrame = null;
-    return temp;
-  }
-
-  // Get RGBA array of data
+// Convert canvas to pixel data for direct GPIO control.
+function updatePixelData() {
   const imageData = ctx.getImageData(0, 0, width, height).data;
-  const bytes = [];
   const rowWidth = width * 4;
+  
   for (let index = 0; index < width * height * 4; index = index + 4) {
     let offset = index;
     let row = Math.floor(index / 4 / width);
+    let pixelIndex = Math.floor(index / 4);
 
-    // Even rows need to be read backwards
+    // Even rows need to be read backwards for snake pattern
     if (row & 1) {
       const rowStart = rowWidth * row;
       const rowEnd = rowStart + rowWidth;
       offset = rowStart + (rowEnd - index - 4);
+      pixelIndex = row * width + (width - 1 - (pixelIndex % width));
     }
 
-    bytes.push(
-      rgbToByte([
-        imageData[offset],
-        imageData[offset + 1],
-        imageData[offset + 2],
-      ])
-    );
+    const r = imageData[offset];
+    const g = imageData[offset + 1];
+    const b = imageData[offset + 2];
+    
+    pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
   }
-  bytes.push(END_FRAME);
-  return bytes;
 }
 
-// Flatten any RGB byte triplet into a single 255 color byte.
-function rgbToByte([r, g, b]) {
-  const byte =
-    (Math.floor(r / 32) << 5) + (Math.floor(g / 32) << 2) + Math.floor(b / 64);
-  // return the byte, reserving the highest bit for frame marking.
-  return byte === 255 ? 254 : byte;
-}
 
-// Write the a scanline buffer from canvas to the serialport.
-function sendFrame(port) {
-  const buffer = new Buffer.from(getFrameData());
+
+// Update pixels and render to GPIO.
+function renderFrame() {
+  updatePixelData();
   checkSetStateFromSchedule();
-  port.write(buffer, () => {
-    setTimeout(() => {
-      sendFrame(port);
-    }, FRAME_RATE_TIME);
-  });
+  ws281x.render(pixelData);
+  setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
-// Try to connect to the serial port and begin writing frames.
+// Initialize GPIO NeoPixel control.
 try {
-  port = new SerialPort(options.port, options, (err) => {
-    if (!err) {
-      console.log("Connected!");
-
-      // Start sending frames.
-      sendFrame(port);
-
-      // Setup the state from Global.
-      setFromState(globalState);
-
-      // Read the schedule.
-      readSchedule();
-
-      port.on("close", (err) => {
-        console.error("Closed!", err);
-        process.exit(1);
-      });
-    } else {
-      console.error(err);
-      process.exit(1);
-    }
+  ws281x.init(options.leds, {
+    gpio: options.gpio,
+    brightness: options.brightness,
+    stripType: options.stripType
   });
+  
+  console.log("GPIO NeoPixel initialized!");
 } catch (err) {
-  console.error(err);
-  process.exit(1);
+  console.log('GPIO initialization skipped - dev mode');
 }
+
+// Start rendering frames.
+renderFrame();
+
+// Setup the state from Global.
+setFromState(globalState);
+
+// Read the schedule.
+readSchedule();
+
+// Cleanup on exit
+process.on('SIGINT', () => {
+  ws281x.reset();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  ws281x.reset();
+  process.exit(0);
+});
 
 // =============================================================================
 // ======================== Setup Server Endpoint ==============================
@@ -617,9 +615,6 @@ httpServer.listen(serverPort, null, () => {
 app.use("/", express.static("./interface/"));
 
 const nm = `./node_modules`;
-app.use("/bulma", express.static(`${nm}/bulma/css/`));
-app.use("/iro", express.static(`${nm}/@jaames/iro/dist/`));
-app.use("/jquery", express.static(`${nm}/jquery/dist/`));
 app.use("/axios", express.static(`${nm}/axios/dist/`));
 app.use("/images", express.static(`./images/`));
 app.use(express.json());

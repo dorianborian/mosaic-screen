@@ -1,12 +1,33 @@
 # mosaic-screen
 A single day hack app to stream at ~30-60fps to a Adafruit Neopixel display
 
+**Version 2.0**: Now runs directly on Raspberry Pi via GPIO instead of serial communication!
+
 Yup, just like it says. Made this with my son Dorian in a day or so. Code
 quality is terrible, but very performant.
 
-Arduino interfaces directly with the Neopixel strip, and simply reads bytes in
-and sets values in order. Here's the Arduino code (though I'm running it on a
-Teensy, still works great):
+## Installation
+
+1. Run the installation script: `./install.sh`
+2. Start the server: `npm start` (requires sudo for GPIO access)
+3. Open browser to `http://your-pi-ip` to control the display
+
+## Hardware Setup
+
+- Connect NeoPixel data line to GPIO 18 (pin 12)
+- Connect NeoPixel power and ground appropriately
+- Supports 15x15 (225 pixel) display in snake pattern
+
+## Configuration
+
+Edit `index.js` to change:
+- GPIO pin (default: 18)
+- Number of LEDs (default: 225 for 15x15)
+- Display dimensions
+
+## Legacy Arduino Code
+
+The original Arduino/Teensy code is preserved below for reference:
 
 ```c++
 // Simple byte based linear stream for FAST 256* color display.
@@ -82,3 +103,16 @@ void loop() {
   }
 }
 ```
+
+## Features
+
+- Web-based control interface
+- Animated GIFs and sprites
+- Bouncing ball animation
+- Scrolling text
+- Digital clock
+- Plasma effects
+- Solid colors
+- Scheduled automation
+- Remote power control
+

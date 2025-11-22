@@ -1,20 +1,19 @@
 {
   "name": "mosaic-screen",
-  "version": "1.0.0",
-  "description": "Controller for single line neopixel \"snake\" wrapped display",
+  "version": "2.0.0",
+  "description": "Controller for single line neopixel \"snake\" wrapped display via GPIO",
   "main": "index.js",
   "scripts": {
-    "start": "node index"
+    "start": "sudo node index",
+    "dev": "node index",
+    "postinstall": "echo 'If canvas fails: brew install pkg-config cairo pango libpng jpeg giflib librsvg (macOS) or apt-get install libcairo2-dev libjpeg-dev libpango1.0-dev libgif-dev build-essential (Linux)'"
   },
   "author": "techninja",
   "license": "MIT",
   "dependencies": {
-    "@jaames/iro": "^5.2.3",
-    "axios": "^0.19.0",
-    "bulma": "^0.7.5",
-    "canvas": "^2.6.0",
-    "express": "^4.17.1",
-    "jquery": "^3.4.1",
-    "serialport": "^7.1.5"
+    "axios": "^1.7.7",
+    "skia-canvas": "^1.0.2",
+    "express": "^4.21.1",
+    "rpi-ws281x-native": "^1.0.4"
   }
 }

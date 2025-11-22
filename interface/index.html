@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Dorian's Mosaic Controller</title>
-  <script src="/jquery/jquery.min.js"></script>
-  <script src="/axios/axios.min.js"></script>
-  <script src="/iro/iro.min.js"></script>
-  <link rel="stylesheet" href="/bulma/bulma.min.css">
+  <script src="https://unpkg.com/axios@1.7.7/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
   <link rel="stylesheet" href="interface.css">
 </head>
 <body>
@@ -119,59 +117,56 @@
   }
 
   // Bind buttons.
-  $('#stop').click(() => {
+  document.getElementById('stop').addEventListener('click', () => {
     post('stop');
   });
 
-  $('#rotate').click(() => {
+  document.getElementById('rotate').addEventListener('click', () => {
     post('rotate', 5);
   });
 
-  // Bind solid color change.
-  const solidColor = new iro.ColorPicker('#solid .picker');
-  solidColor.on('color:change', function (color) {
-    post('color', color.hexString);
+  // Simple color inputs instead of color picker
+  document.querySelector('#solid .picker').innerHTML = '<input type="color" id="solid-color" value="#ff0000">';
+  document.querySelector('#clock .picker').innerHTML = '<input type="color" id="clock-color" value="#ff0000">';
+  document.querySelector('#balls .picker').innerHTML = '<input type="color" id="ball-color" value="#ff0000">';
+  document.querySelector('#text .picker').innerHTML = '<input type="color" id="text-color" value="#0000ff">';
+
+  document.getElementById('solid-color').addEventListener('change', (e) => {
+    post('color', e.target.value);
   });
 
-  // Bind clock color change.
-  const clockColor = new iro.ColorPicker('#clock .picker');
-  clockColor.on('color:change', function (color) {
-    post('clock', { color: color.hexString });
+  document.getElementById('clock-color').addEventListener('change', (e) => {
+    post('clock', { color: e.target.value });
   });
 
-  // Bind bouncy ball.
-  const ballColor = new iro.ColorPicker('#balls .picker');
-  ballColor.on('color:change', function (color) {
-    post('ball', color.hexString);
+  document.getElementById('ball-color').addEventListener('change', (e) => {
+    post('ball', e.target.value);
   });
 
-  // Bind scrolling text mode.
-  const textColor = new iro.ColorPicker('#text .picker');
-  textColor.on('color:change', function (color) {
+  document.getElementById('text-color').addEventListener('change', (e) => {
     post('scroll', {
-      text: $('#text-input').val(),
+      text: document.getElementById('text-input').value,
       size: 8,
-      speed: $('#speed').val(),
+      speed: document.getElementById('speed').value,
       font: 'Minecraftia',
       baseline: 6,
-      color: color.hexString,
+      color: e.target.value,
     });
   });
 
   // Bind Brightness Slider.
-  $('#brightness').change(() => {
-    axios.post('bright', {brightness: $('#brightness').val()});
+  document.getElementById('brightness').addEventListener('change', (e) => {
+    axios.post('bright', {brightness: e.target.value});
   });
 
   // Add power options
   ['shutdown', 'restart'].forEach((option) => {
-    $('#power').append(
-      $('<button>')
-        .text(option)
-        .click(() => {
-          post('power', option);
-        })
-    );
+    const btn = document.createElement('button');
+    btn.textContent = option;
+    btn.addEventListener('click', () => {
+      post('power', option);
+    });
+    document.getElementById('power').appendChild(btn);
   });
 
   function toAMPM(time) {
@@ -190,44 +185,30 @@
 
   // Get schedule options.
   function buildSchedule({ data: schedule }) {
-    $('#schedule tbody').empty();
+    const tbody = document.querySelector('#schedule tbody');
+    tbody.innerHTML = '';
     Object.entries(schedule).forEach(([time, entry]) => {
-      $('#schedule tbody').append(
-        $('<tr>').append(
-          $('<td>').text(toAMPM(time)),
-          $('<td>').text(entry.mode),
-          $('<td>').text(entry.brightness),
-          $('<td>').text(JSON.stringify(entry.options)),
-          $('<td>').append(
-            $('<button>')
-              .addClass('button is-secondary is-small')
-              .text('👁️')
-              .click(() => {
-                axios.put(`schedule/${time}`);
-              }),
-            $('<button>')
-              .addClass('button is-primary is-small')
-              .text('🔄')
-              .click(() => {
-                axios.post(`schedule`, { time }).then(buildSchedule);
-              }),
-            $('<button>')
-              .addClass('button is-danger is-small')
-              .text('🗑️')
-              .click(() => {
-                axios.delete(`schedule/${time}`).then(buildSchedule);
-              })
-          )
-        )
-      );
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${toAMPM(time)}</td>
+        <td>${entry.mode}</td>
+        <td>${entry.brightness}</td>
+        <td>${JSON.stringify(entry.options)}</td>
+        <td>
+          <button class="button is-secondary is-small" onclick="axios.put('schedule/${time}')">👁️</button>
+          <button class="button is-primary is-small" onclick="axios.post('schedule', {time: '${time}'}).then(buildSchedule)">🔄</button>
+          <button class="button is-danger is-small" onclick="axios.delete('schedule/${time}').then(buildSchedule)">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(row);
     });
   }
 
   // Get initial schedule, bind buttons.
   axios.get('schedule').then(buildSchedule);
-  $('#schedule tfoot button').click(() => {
-    axios.post(`schedule`, {
-      time: $('#schedule tfoot input').val(),
+  document.querySelector('#schedule tfoot button').addEventListener('click', () => {
+    axios.post('schedule', {
+      time: document.querySelector('#schedule tfoot input').value,
     }).then(buildSchedule);
   });
 
@@ -235,32 +216,33 @@
 
   // Get the images.
   axios.get('data').then(({ data }) => {
-    $('#images').empty();
+    const images = document.getElementById('images');
+    images.innerHTML = '';
     Object.entries(data.images).forEach(([name, { fps }]) => {
-      $('#images').append(
-        $('<button>')
-          .attr('style', `background-image: url("/images/animations/${name}_${fps}.gif")`)
-          .text(name)
-          .click(() => {post('image', name)})
-      );
+      const btn = document.createElement('button');
+      btn.style.backgroundImage = `url("/images/animations/${name}_${fps}.gif")`;
+      btn.textContent = name;
+      btn.addEventListener('click', () => post('image', name));
+      images.appendChild(btn);
     });
 
-    // Add plasma mode! Not really an image, but whatever...
-    $('#images').append(
-      $('<button>')
-        .attr('id', 'plasma')
-        .click(() => {post('plasma', {})})
-        .text('Plasma!'),
-      $('<button>')
-        .attr('style', `background-image: url("/images/plasma.gif")`)
-        .click(() => {post('plasma', {withClock: true})})
-        .text("PClock"),
-      $('<button>')
-        .attr('style', `background-image: url("/images/plasma.gif")`)
-        .click(() => {post('plasma', {withClock: true, flipClock: true})})
-        .text("!PClock")
-    );
+    // Add plasma modes
+    const plasmaBtn = document.createElement('button');
+    plasmaBtn.textContent = 'Plasma!';
+    plasmaBtn.addEventListener('click', () => post('plasma', {}));
+    images.appendChild(plasmaBtn);
 
+    const pclockBtn = document.createElement('button');
+    pclockBtn.style.backgroundImage = 'url("/images/plasma.gif")';
+    pclockBtn.textContent = 'PClock';
+    pclockBtn.addEventListener('click', () => post('plasma', {withClock: true}));
+    images.appendChild(pclockBtn);
+
+    const flipPclockBtn = document.createElement('button');
+    flipPclockBtn.style.backgroundImage = 'url("/images/plasma.gif")';
+    flipPclockBtn.textContent = '!PClock';
+    flipPclockBtn.addEventListener('click', () => post('plasma', {withClock: true, flipClock: true}));
+    images.appendChild(flipPclockBtn);
   });
 </script>
 </body>
