@@ -16,16 +16,31 @@ const loadImage = (path) => {
           const ctx = canvas.getContext('2d');
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           
+          console.log(`GIF loaded: ${canvas.width}x${canvas.height}`);
+          // Sample first few pixels
+          for (let i = 0; i < Math.min(20, imageData.data.length); i += 4) {
+            const r = imageData.data[i];
+            const g = imageData.data[i + 1];
+            const b = imageData.data[i + 2];
+            const a = imageData.data[i + 3];
+            if (r || g || b) {
+              console.log(`Pixel ${i/4}: [${r},${g},${b},${a}]`);
+              break;
+            }
+          }
+          
           resolve({ 
             width: canvas.width, 
             height: canvas.height, 
             data: imageData.data 
           });
         })
-        .catch(() => {
+        .catch((err) => {
+          console.log('GIF loading failed:', err.message);
           resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
         });
     } catch (err) {
+      console.log('GIF loading error:', err.message);
       resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
     }
   });
