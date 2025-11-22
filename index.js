@@ -22,7 +22,7 @@ const options = {
   gpio: 18,
   leds: 225,
   brightness: 100,
-  stripType: ws281x.stripType.WS2812
+  stripType: ws281x.stripType?.WS2812 || 0x00100800
 };
 
 const FRAME_RATE = 60; // In Frame updates per second
@@ -529,7 +529,10 @@ function setBrightness(level) {
   bLevel = bLevel > 255 ? 255 : bLevel;
   bLevel = bLevel < 0 ? 0 : bLevel;
 
-  ws281x.setBrightness(bLevel);
+  // Set brightness on the channel object
+  if (channel && channel.brightness !== undefined) {
+    channel.brightness = bLevel;
+  }
   return bLevel;
 }
 
@@ -565,13 +568,20 @@ function updatePixelData() {
 function renderFrame() {
   updatePixelData();
   checkSetStateFromSchedule();
-  ws281x.render(pixelData);
+  if (channel) {
+    // Copy pixel data to channel array
+    for (let i = 0; i < pixelData.length; i++) {
+      channel.array[i] = pixelData[i];
+    }
+    ws281x.render();
+  }
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
 // Initialize GPIO NeoPixel control.
+let channel;
 try {
-  ws281x.init(options.leds, {
+  channel = ws281x(options.leds, {
     gpio: options.gpio,
     brightness: options.brightness,
     stripType: options.stripType
