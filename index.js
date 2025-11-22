@@ -417,10 +417,14 @@ function animImage(name) {
         
         if (image.data && image.data.length > 0) {
           ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
+          // Debug: check if anything was drawn
+          const testPixel = ctx.getImageData(7, 7, 1, 1).data;
+          console.log(`Frame ${frame}: center pixel [${testPixel[0]},${testPixel[1]},${testPixel[2]}]`);
         } else {
           // Fallback: draw colored square
           ctx.fillStyle = frame % 2 ? '#ff0000' : '#00ff00';
           ctx.fillRect(5, 5, 5, 5);
+          console.log(`Fallback frame ${frame}`);
         }
         
         frame++;
