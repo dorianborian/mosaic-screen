@@ -32,6 +32,7 @@ class SimpleCanvas {
   fillRect(x, y, w, h) {
     const color = this.hexToRgb(this.fillStyle);
     x = Math.floor(x); y = Math.floor(y); w = Math.floor(w); h = Math.floor(h);
+    console.log(`fillRect(${x},${y},${w},${h}) with color ${this.fillStyle} -> RGB(${color.r},${color.g},${color.b})`);
     for (let py = y; py < y + h && py < this.height; py++) {
       for (let px = x; px < x + w && px < this.width; px++) {
         if (px >= 0 && py >= 0) {
@@ -40,6 +41,7 @@ class SimpleCanvas {
           this.pixels[i + 1] = color.g;
           this.pixels[i + 2] = color.b;
           this.pixels[i + 3] = 255;
+          console.log(`Set pixel (${px},${py}) index ${i} to [${color.r},${color.g},${color.b},255]`);
         }
       }
     }
@@ -111,6 +113,13 @@ class SimpleCanvas {
   }
 
   getImageData(x, y, w, h) {
+    if (w === 1 && h === 1) {
+      // Single pixel read
+      const i = (y * this.width + x) * 4;
+      const pixel = [this.pixels[i], this.pixels[i+1], this.pixels[i+2], this.pixels[i+3]];
+      console.log(`getImageData(${x},${y}) index ${i} returns [${pixel.join(',')}]`);
+      return { data: pixel };
+    }
     return { data: this.pixels };
   }
 
