@@ -1,7 +1,17 @@
 /**
  * @file Main file for Mosaic Screen! Your friendly neopixel screen controller
  */
-const { createCanvas, loadImage } = require("canvas");
+let createCanvas, loadImage;
+try {
+  const { Canvas, loadImage: skiaLoadImage } = require('skia-canvas');
+  createCanvas = (w, h) => new Canvas(w, h);
+  loadImage = skiaLoadImage;
+  console.log('Using skia-canvas');
+} catch (err) {
+  console.log('Skia-canvas not available, using mock canvas');
+  createCanvas = (w, h) => ({ width: w, height: h });
+  loadImage = (path) => Promise.resolve({ width: 15, height: 15 });
+}
 const fs = require('fs');
 const path = require('path');
 let ws281x;
@@ -35,11 +45,10 @@ const serverPort = 80;
 let canvas, ctx;
 try {
   canvas = createCanvas(width, height);
-  ctx = canvas.getContext("2d", { antialias: "none" });
-  console.log('Canvas initialized successfully');
+  ctx = canvas.getContext('2d');
+  console.log('Canvas initialized');
 } catch (err) {
-  console.error('Canvas initialization failed:', err.message);
-  // Create mock canvas for headless operation
+  console.log('Canvas failed, using mock');
   canvas = { width, height };
   ctx = {
     clearRect: () => {},
