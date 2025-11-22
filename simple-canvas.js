@@ -107,7 +107,27 @@ class SimpleCanvas {
   }
 
   drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh) {
-    if (!img.data) return;
+    if (!img.data) {
+      console.log('drawImage: no img.data');
+      return;
+    }
+    
+    console.log(`drawImage: src(${sx},${sy},${sw},${sh}) -> dst(${dx},${dy},${dw},${dh})`);
+    console.log(`Image size: ${img.width}x${img.height}, data length: ${img.data.length}`);
+    
+    // Test: sample a few source pixels
+    for (let testY = 0; testY < Math.min(3, sh); testY++) {
+      for (let testX = 0; testX < Math.min(3, sw); testX++) {
+        const srcIndex = ((sy + testY) * img.width + (sx + testX)) * 4;
+        if (srcIndex < img.data.length) {
+          const r = img.data[srcIndex];
+          const g = img.data[srcIndex + 1];
+          const b = img.data[srcIndex + 2];
+          const a = img.data[srcIndex + 3];
+          console.log(`Source pixel (${sx + testX},${sy + testY}): [${r},${g},${b},${a}]`);
+        }
+      }
+    }
     
     // Simple frame extraction from sprite sheet
     for (let y = 0; y < sh && y + dy < this.height; y++) {
@@ -116,10 +136,12 @@ class SimpleCanvas {
           const srcIndex = ((sy + y) * img.width + (sx + x)) * 4;
           const dstIndex = ((dy + y) * this.width + (dx + x)) * 4;
           
-          this.pixels[dstIndex] = img.data[srcIndex];
-          this.pixels[dstIndex + 1] = img.data[srcIndex + 1];
-          this.pixels[dstIndex + 2] = img.data[srcIndex + 2];
-          this.pixels[dstIndex + 3] = img.data[srcIndex + 3];
+          if (srcIndex < img.data.length) {
+            this.pixels[dstIndex] = img.data[srcIndex];
+            this.pixels[dstIndex + 1] = img.data[srcIndex + 1];
+            this.pixels[dstIndex + 2] = img.data[srcIndex + 2];
+            this.pixels[dstIndex + 3] = img.data[srcIndex + 3];
+          }
         }
       }
     }
