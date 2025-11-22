@@ -398,11 +398,15 @@ function animImage(name) {
   }
 
   const { fps } = appData.images[name];
+  console.log(`Loading animation: ${name}, fps: ${fps}`);
 
   return new Promise((done) => {
     loadImage(`${animPath}/${name}_${fps}.gif`).then((image) => {
-      const frames = image.width / width;
+      console.log(`Loaded image: ${image.width}x${image.height}`);
+      const frames = Math.floor(image.width / width);
+      console.log(`Calculated ${frames} frames`);
       let frame = 0;
+      
       const interval = setInterval(() => {
         if (frame >= frames) {
           frame = 0;
@@ -410,7 +414,15 @@ function animImage(name) {
 
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
+        
+        if (image.data && image.data.length > 0) {
+          ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
+        } else {
+          // Fallback: draw colored square
+          ctx.fillStyle = frame % 2 ? '#ff0000' : '#00ff00';
+          ctx.fillRect(5, 5, 5, 5);
+        }
+        
         frame++;
       }, Math.round(1000 / fps));
       done(interval);
