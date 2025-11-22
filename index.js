@@ -350,11 +350,13 @@ function ballBounce(color) {
     ballPosition.x = Math.floor(ball.x);
     ballPosition.y = Math.floor(ball.y);
 
-    ctx.beginPath();
+    // Simple rect instead of arc for debugging
     ctx.fillStyle = color;
-    ctx.arc(ball.x, ball.y, rad, 0, Math.PI * 2, false);
-    ctx.fill();
-    ctx.closePath();
+    ctx.fillRect(ballPosition.x, ballPosition.y, 1, 1);
+    
+    // Debug: check what we just drew
+    const imageData = ctx.getImageData(ballPosition.x, ballPosition.y, 1, 1).data;
+    console.log(`Drew at (${ballPosition.x},${ballPosition.y}), canvas RGBA: [${imageData[0]},${imageData[1]},${imageData[2]},${imageData[3]}]`);
   }
   return setInterval(DrawMe, FRAME_RATE_TIME);
 }
@@ -646,26 +648,24 @@ try {
     ws281x.render();
     
     setTimeout(() => {
-      console.log('Clearing test pixels...');
-      for (let i = 0; i < 5; i++) {
-        channel.array[i] = 0x000000; // Off
-      }
-      ws281x.render();
-      console.log('Starting normal rendering...');
+      console.log('Test complete, starting normal rendering...');
     }, 2000);
   }
 } catch (err) {
   console.log('GPIO initialization skipped - dev mode');
 }
 
-// Start rendering frames.
-renderFrame();
+// Read the schedule.
+readSchedule();
 
 // Setup the state from Global.
 setFromState(globalState);
 
-// Read the schedule.
-readSchedule();
+// Start rendering frames after a delay to let test complete
+setTimeout(() => {
+  console.log('Starting frame rendering...');
+  renderFrame();
+}, 3000);
 
 console.log('Server starting, initial state:', globalState);
 
