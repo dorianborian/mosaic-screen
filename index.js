@@ -3,7 +3,34 @@
  */
 const { SimpleCanvas } = require('./simple-canvas');
 const createCanvas = (w, h) => new SimpleCanvas(w, h);
-const loadImage = (path) => Promise.resolve({ width: 15, height: 15 });
+
+// Load GIF as horizontal sprite sheet (already in left-to-right format)
+const loadImage = (path) => {
+  return new Promise((resolve) => {
+    try {
+      const gifFrames = require('gif-frames');
+      
+      gifFrames({ url: path, frames: 0, outputType: 'canvas' })
+        .then((frameData) => {
+          const canvas = frameData[0].getImage();
+          const ctx = canvas.getContext('2d');
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          
+          resolve({ 
+            width: canvas.width, 
+            height: canvas.height, 
+            data: imageData.data 
+          });
+        })
+        .catch(() => {
+          resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
+        });
+    } catch (err) {
+      resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
+    }
+  });
+};
+
 console.log('Using simple canvas implementation');
 const fs = require('fs');
 const path = require('path');
@@ -377,7 +404,7 @@ function animImage(name) {
       const frames = image.width / width;
       let frame = 0;
       const interval = setInterval(() => {
-        if (frame == frames) {
+        if (frame >= frames) {
           frame = 0;
         }
 

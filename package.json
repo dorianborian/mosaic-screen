@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.21.1",
-    "rpi-ws281x-native": "^1.0.4"
+    "rpi-ws281x-native": "^1.0.4",
+    "gif-frames": "^1.0.1"
   }
 }

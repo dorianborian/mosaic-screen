@@ -107,7 +107,22 @@ class SimpleCanvas {
   }
 
   drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh) {
-    // Simple image drawing - would need actual image data
+    if (!img.data) return;
+    
+    // Simple frame extraction from sprite sheet
+    for (let y = 0; y < sh && y + dy < this.height; y++) {
+      for (let x = 0; x < sw && x + dx < this.width; x++) {
+        if (x + dx >= 0 && y + dy >= 0) {
+          const srcIndex = ((sy + y) * img.width + (sx + x)) * 4;
+          const dstIndex = ((dy + y) * this.width + (dx + x)) * 4;
+          
+          this.pixels[dstIndex] = img.data[srcIndex];
+          this.pixels[dstIndex + 1] = img.data[srcIndex + 1];
+          this.pixels[dstIndex + 2] = img.data[srcIndex + 2];
+          this.pixels[dstIndex + 3] = img.data[srcIndex + 3];
+        }
+      }
+    }
   }
 
   getImageData(x, y, w, h) {
