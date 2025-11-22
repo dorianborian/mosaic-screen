@@ -546,26 +546,27 @@ function setBrightness(level) {
 // Convert canvas to pixel data for direct GPIO control.
 function updatePixelData() {
   const imageData = ctx.getImageData(0, 0, width, height).data;
-  const rowWidth = width * 4;
   
-  for (let index = 0; index < width * height * 4; index = index + 4) {
-    let offset = index;
-    let row = Math.floor(index / 4 / width);
-    let pixelIndex = Math.floor(index / 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const canvasIndex = (y * width + x) * 4;
+      
+      // Snake pattern: odd rows go right-to-left
+      let pixelIndex;
+      if (y % 2 === 0) {
+        // Even rows: left to right
+        pixelIndex = y * width + x;
+      } else {
+        // Odd rows: right to left
+        pixelIndex = y * width + (width - 1 - x);
+      }
 
-    // Even rows need to be read backwards for snake pattern
-    if (row & 1) {
-      const rowStart = rowWidth * row;
-      const rowEnd = rowStart + rowWidth;
-      offset = rowStart + (rowEnd - index - 4);
-      pixelIndex = row * width + (width - 1 - (pixelIndex % width));
+      const r = imageData[canvasIndex];
+      const g = imageData[canvasIndex + 1];
+      const b = imageData[canvasIndex + 2];
+      
+      pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
     }
-
-    const r = imageData[offset];
-    const g = imageData[offset + 1];
-    const b = imageData[offset + 2];
-    
-    pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
   }
 }
 
