@@ -32,8 +32,30 @@ const width = 15;
 const height = 15;
 let pixelData = new Uint32Array(225);
 const serverPort = 80;
-const canvas = createCanvas(width, height);
-const ctx = canvas.getContext("2d", { antialias: "none" });
+let canvas, ctx;
+try {
+  canvas = createCanvas(width, height);
+  ctx = canvas.getContext("2d", { antialias: "none" });
+  console.log('Canvas initialized successfully');
+} catch (err) {
+  console.error('Canvas initialization failed:', err.message);
+  // Create mock canvas for headless operation
+  canvas = { width, height };
+  ctx = {
+    clearRect: () => {},
+    fillRect: () => {},
+    fillText: () => {},
+    drawImage: () => {},
+    arc: () => {},
+    fill: () => {},
+    stroke: () => {},
+    beginPath: () => {},
+    closePath: () => {},
+    measureText: () => ({ width: 50 }),
+    getImageData: () => ({ data: new Array(width * height * 4).fill(0) }),
+    putImageData: () => {}
+  };
+}
 
 // Manage state.
 // Initial values here represent default startup state.
@@ -538,27 +560,31 @@ function setBrightness(level) {
 
 // Convert canvas to pixel data for direct GPIO control.
 function updatePixelData() {
-  const imageData = ctx.getImageData(0, 0, width, height).data;
-  const rowWidth = width * 4;
-  
-  for (let index = 0; index < width * height * 4; index = index + 4) {
-    let offset = index;
-    let row = Math.floor(index / 4 / width);
-    let pixelIndex = Math.floor(index / 4);
-
-    // Even rows need to be read backwards for snake pattern
-    if (row & 1) {
-      const rowStart = rowWidth * row;
-      const rowEnd = rowStart + rowWidth;
-      offset = rowStart + (rowEnd - index - 4);
-      pixelIndex = row * width + (width - 1 - (pixelIndex % width));
-    }
-
-    const r = imageData[offset];
-    const g = imageData[offset + 1];
-    const b = imageData[offset + 2];
+  try {
+    const imageData = ctx.getImageData(0, 0, width, height).data;
+    const rowWidth = width * 4;
     
-    pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
+    for (let index = 0; index < width * height * 4; index = index + 4) {
+      let offset = index;
+      let row = Math.floor(index / 4 / width);
+      let pixelIndex = Math.floor(index / 4);
+
+      // Even rows need to be read backwards for snake pattern
+      if (row & 1) {
+        const rowStart = rowWidth * row;
+        const rowEnd = rowStart + rowWidth;
+        offset = rowStart + (rowEnd - index - 4);
+        pixelIndex = row * width + (width - 1 - (pixelIndex % width));
+      }
+
+      const r = imageData[offset];
+      const g = imageData[offset + 1];
+      const b = imageData[offset + 2];
+      
+      pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
+    }
+  } catch (err) {
+    // Skip canvas operations if canvas failed
   }
 }
 
