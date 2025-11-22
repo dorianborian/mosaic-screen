@@ -327,6 +327,7 @@ function scrollText({
 // Bounce a ball around the screen.
 let ballPosition = { x: 7, y: 7 }; // Global for debugging
 function ballBounce(color) {
+  console.log('ballBounce called with color:', color, typeof color);
   var p = {
     x: Math.ceil(Math.random() * 13) + 1,
     y: Math.ceil(Math.random() * 13) + 1,
@@ -353,10 +354,6 @@ function ballBounce(color) {
     // Simple rect instead of arc for debugging
     ctx.fillStyle = color;
     ctx.fillRect(ballPosition.x, ballPosition.y, 1, 1);
-    
-    // Debug: check what we just drew
-    const imageData = ctx.getImageData(ballPosition.x, ballPosition.y, 1, 1).data;
-    console.log(`Drew at (${ballPosition.x},${ballPosition.y}), canvas RGBA: [${imageData[0]},${imageData[1]},${imageData[2]},${imageData[3]}]`);
   }
   return setInterval(DrawMe, FRAME_RATE_TIME);
 }
