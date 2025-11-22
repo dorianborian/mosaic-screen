@@ -567,10 +567,41 @@ function updatePixelData() {
 
 
 
+// Terminal display for debugging
+function renderTerminal() {
+  const imageData = ctx.getImageData(0, 0, width, height).data;
+  let output = '\x1b[2J\x1b[H'; // Clear screen and move cursor to top
+  
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const r = imageData[i];
+      const g = imageData[i + 1];
+      const b = imageData[i + 2];
+      
+      // Convert to ANSI color (simple 8-color mapping)
+      let color = 0;
+      if (r > 128) color += 1; // Red
+      if (g > 128) color += 2; // Green  
+      if (b > 128) color += 4; // Blue
+      
+      output += `\x1b[4${color}m  \x1b[0m`; // Colored background block
+    }
+    output += '\n';
+  }
+  process.stdout.write(output);
+}
+
 // Update pixels and render to GPIO.
 function renderFrame() {
   updatePixelData();
   checkSetStateFromSchedule();
+  
+  // Terminal debug display
+  if (!channel) {
+    renderTerminal();
+  }
+  
   if (channel) {
     // Copy pixel data to channel array
     for (let i = 0; i < pixelData.length; i++) {
