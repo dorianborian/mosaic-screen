@@ -613,10 +613,14 @@ function renderFrame() {
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
-// Debug frame counter
+// Debug frame counter and pixel data
 let frameCount = 0;
 setInterval(() => {
-  console.log(`Frames rendered: ${frameCount}, Mode: ${globalState.mode}`);
+  const firstPixels = [];
+  for (let i = 0; i < 5; i++) {
+    firstPixels.push(`0x${pixelData[i].toString(16).padStart(6, '0')}`);
+  }
+  console.log(`Frames: ${frameCount}, Mode: ${globalState.mode}, First 5 pixels: ${firstPixels.join(', ')}`);
   frameCount = 0;
 }, 5000);
 
@@ -630,6 +634,23 @@ try {
   });
   
   console.log("GPIO NeoPixel initialized!");
+  
+  // Test: Set first 5 pixels to red
+  if (channel) {
+    console.log('Testing first 5 pixels red...');
+    for (let i = 0; i < 5; i++) {
+      channel.array[i] = 0xFF0000; // Red
+    }
+    ws281x.render();
+    
+    setTimeout(() => {
+      console.log('Clearing test pixels...');
+      for (let i = 0; i < 5; i++) {
+        channel.array[i] = 0x000000; // Off
+      }
+      ws281x.render();
+    }, 3000);
+  }
 } catch (err) {
   console.log('GPIO initialization skipped - dev mode');
 }
