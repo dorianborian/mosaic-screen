@@ -327,7 +327,6 @@ function scrollText({
 // Bounce a ball around the screen.
 let ballPosition = { x: 7, y: 7 }; // Global for debugging
 function ballBounce(color) {
-  console.log('ballBounce called with color:', color, typeof color);
   var p = {
     x: Math.ceil(Math.random() * 13) + 1,
     y: Math.ceil(Math.random() * 13) + 1,
@@ -351,9 +350,11 @@ function ballBounce(color) {
     ballPosition.x = Math.floor(ball.x);
     ballPosition.y = Math.floor(ball.y);
 
-    // Simple rect instead of arc for debugging
+    ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.fillRect(ballPosition.x, ballPosition.y, 1, 1);
+    ctx.arc(ball.x, ball.y, rad, 0, Math.PI * 2, false);
+    ctx.fill();
+    ctx.closePath();
   }
   return setInterval(DrawMe, FRAME_RATE_TIME);
 }
@@ -597,7 +598,6 @@ function renderTerminal() {
 
 // Update pixels and render to GPIO.
 function renderFrame() {
-  frameCount++;
   updatePixelData();
   checkSetStateFromSchedule();
   
@@ -616,14 +616,10 @@ function renderFrame() {
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
-// Debug frame counter and ball position
-let frameCount = 0;
+// Debug mode announcements
 setInterval(() => {
-  const ballPixelIndex = ballPosition.y * width + ballPosition.x;
-  const ballPixelValue = pixelData[ballPixelIndex] || 0;
-  console.log(`Frames: ${frameCount}, Mode: ${globalState.mode}, Ball pos: (${ballPosition.x},${ballPosition.y}), Ball pixel: 0x${ballPixelValue.toString(16).padStart(6, '0')}`);
-  frameCount = 0;
-}, 2000);
+  console.log(`Mode: ${globalState.mode}`);
+}, 10000);
 
 // Initialize GPIO NeoPixel control.
 let channel;
