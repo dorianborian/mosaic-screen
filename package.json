@@ -6,7 +6,7 @@
   "scripts": {
     "start": "sudo node index",
     "dev": "node index",
-    "preinstall": "sudo apt-get update && sudo apt-get install -y libcairo2-dev libjpeg-dev libpango1.0-dev libgif-dev build-essential g++ pkg-config libpixman-1-dev"
+    "preinstall": "node setup.js"
   },
   "author": "techninja",
   "license": "MIT",
