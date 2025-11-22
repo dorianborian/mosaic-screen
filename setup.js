@@ -15,6 +15,15 @@ const isLinux = () => os.platform() === 'linux';
 
 console.log('Setting up mosaic-screen dependencies...');
 
+// Install Rust/Cargo first
+console.log('Installing Rust/Cargo...');
+try {
+  execSync('curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y', { stdio: 'inherit' });
+  execSync('source ~/.cargo/env', { stdio: 'inherit', shell: true });
+} catch (err) {
+  console.log('Rust installation failed, continuing...');
+}
+
 if (isRaspberryPi()) {
   console.log('Raspberry Pi detected - installing canvas dependencies');
   try {
@@ -24,7 +33,12 @@ if (isRaspberryPi()) {
     process.exit(1);
   }
 } else if (isDarwin()) {
-  console.log('macOS detected - development mode (canvas may need: brew install pkg-config cairo pango libpng jpeg giflib librsvg)');
+  console.log('macOS detected - development mode');
+  try {
+    execSync('brew install pkg-config cairo pango libpng jpeg giflib librsvg', { stdio: 'inherit' });
+  } catch (err) {
+    console.log('Homebrew install failed - you may need: brew install pkg-config cairo pango libpng jpeg giflib librsvg');
+  }
 } else if (isLinux()) {
   console.log('Linux detected - installing canvas dependencies');
   try {
