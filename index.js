@@ -325,6 +325,7 @@ function scrollText({
 }
 
 // Bounce a ball around the screen.
+let ballPosition = { x: 7, y: 7 }; // Global for debugging
 function ballBounce(color) {
   var p = {
     x: Math.ceil(Math.random() * 13) + 1,
@@ -345,6 +346,9 @@ function ballBounce(color) {
 
     ball.x += moveX;
     ball.y += moveY;
+    
+    ballPosition.x = Math.floor(ball.x);
+    ballPosition.y = Math.floor(ball.y);
 
     ctx.beginPath();
     ctx.fillStyle = color;
@@ -613,16 +617,14 @@ function renderFrame() {
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
-// Debug frame counter and pixel data
+// Debug frame counter and ball position
 let frameCount = 0;
 setInterval(() => {
-  const firstPixels = [];
-  for (let i = 0; i < 5; i++) {
-    firstPixels.push(`0x${pixelData[i].toString(16).padStart(6, '0')}`);
-  }
-  console.log(`Frames: ${frameCount}, Mode: ${globalState.mode}, First 5 pixels: ${firstPixels.join(', ')}`);
+  const ballPixelIndex = ballPosition.y * width + ballPosition.x;
+  const ballPixelValue = pixelData[ballPixelIndex] || 0;
+  console.log(`Frames: ${frameCount}, Mode: ${globalState.mode}, Ball pos: (${ballPosition.x},${ballPosition.y}), Ball pixel: 0x${ballPixelValue.toString(16).padStart(6, '0')}`);
   frameCount = 0;
-}, 5000);
+}, 2000);
 
 // Initialize GPIO NeoPixel control.
 let channel;
