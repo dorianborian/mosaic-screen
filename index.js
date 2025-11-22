@@ -662,6 +662,7 @@ setTimeout(() => {
 }, 3000);
 
 console.log('Server starting, initial state:', globalState);
+console.log(`Web interface available at http://192.168.86.57:${serverPort}`);
 
 // Cleanup on exit
 process.on('SIGINT', () => {
@@ -677,7 +678,7 @@ process.on('SIGTERM', () => {
 // =============================================================================
 // ======================== Setup Server Endpoint ==============================
 // =============================================================================
-httpServer.listen(serverPort, null, () => {
+httpServer.listen(serverPort, '0.0.0.0', () => {
   // Properly close down server on fail/close
   process.on("SIGTERM", (err) => {
     httpServer.close();
