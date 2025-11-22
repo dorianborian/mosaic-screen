@@ -6,6 +6,10 @@ class SimpleCanvas {
     this.pixels = new Uint8ClampedArray(width * height * 4);
     this.fillStyle = '#000000';
     this.font = '8px Arial';
+    // Initialize with transparent pixels
+    for (let i = 3; i < this.pixels.length; i += 4) {
+      this.pixels[i] = 255; // Alpha
+    }
   }
 
   getContext() {
@@ -13,24 +17,30 @@ class SimpleCanvas {
   }
 
   clearRect(x, y, w, h) {
+    x = Math.floor(x); y = Math.floor(y); w = Math.floor(w); h = Math.floor(h);
     for (let py = y; py < y + h && py < this.height; py++) {
       for (let px = x; px < x + w && px < this.width; px++) {
-        const i = (py * this.width + px) * 4;
-        this.pixels[i] = this.pixels[i + 1] = this.pixels[i + 2] = 0;
-        this.pixels[i + 3] = 255;
+        if (px >= 0 && py >= 0) {
+          const i = (py * this.width + px) * 4;
+          this.pixels[i] = this.pixels[i + 1] = this.pixels[i + 2] = 0;
+          this.pixels[i + 3] = 255;
+        }
       }
     }
   }
 
   fillRect(x, y, w, h) {
     const color = this.hexToRgb(this.fillStyle);
+    x = Math.floor(x); y = Math.floor(y); w = Math.floor(w); h = Math.floor(h);
     for (let py = y; py < y + h && py < this.height; py++) {
       for (let px = x; px < x + w && px < this.width; px++) {
-        const i = (py * this.width + px) * 4;
-        this.pixels[i] = color.r;
-        this.pixels[i + 1] = color.g;
-        this.pixels[i + 2] = color.b;
-        this.pixels[i + 3] = 255;
+        if (px >= 0 && py >= 0) {
+          const i = (py * this.width + px) * 4;
+          this.pixels[i] = color.r;
+          this.pixels[i + 1] = color.g;
+          this.pixels[i + 2] = color.b;
+          this.pixels[i + 3] = 255;
+        }
       }
     }
   }
@@ -80,9 +90,10 @@ class SimpleCanvas {
     if (this._arcData) {
       const { x, y, radius } = this._arcData;
       const color = this.hexToRgb(this.fillStyle);
-      for (let py = Math.max(0, y - radius); py <= Math.min(this.height - 1, y + radius); py++) {
-        for (let px = Math.max(0, x - radius); px <= Math.min(this.width - 1, x + radius); px++) {
-          const dist = Math.sqrt((px - x) ** 2 + (py - y) ** 2);
+      const fx = Math.floor(x), fy = Math.floor(y);
+      for (let py = Math.max(0, fy - radius); py <= Math.min(this.height - 1, fy + radius); py++) {
+        for (let px = Math.max(0, fx - radius); px <= Math.min(this.width - 1, fx + radius); px++) {
+          const dist = Math.sqrt((px - fx) ** 2 + (py - fy) ** 2);
           if (dist <= radius) {
             const i = (py * this.width + px) * 4;
             this.pixels[i] = color.r;

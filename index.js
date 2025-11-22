@@ -649,7 +649,8 @@ try {
         channel.array[i] = 0x000000; // Off
       }
       ws281x.render();
-    }, 3000);
+      console.log('Starting normal rendering...');
+    }, 2000);
   }
 } catch (err) {
   console.log('GPIO initialization skipped - dev mode');
