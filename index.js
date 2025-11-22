@@ -1,8 +1,7 @@
 /**
  * @file Main file for Mosaic Screen! Your friendly neopixel screen controller
  */
-const { Canvas, loadImage } = require("skia-canvas");
-const createCanvas = (w, h) => new Canvas(w, h);
+const { createCanvas, loadImage } = require("canvas");
 const fs = require('fs');
 const path = require('path');
 let ws281x;
