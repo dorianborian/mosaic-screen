@@ -9,7 +9,6 @@ if ! command -v node &> /dev/null; then
     sudo apt-get install -y nodejs
 fi
 
-# Install npm dependencies (preinstall script handles system deps)
 npm install
 
 echo "Installation complete!"

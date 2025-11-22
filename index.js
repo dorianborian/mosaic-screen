@@ -1,17 +1,10 @@
 /**
  * @file Main file for Mosaic Screen! Your friendly neopixel screen controller
  */
-let createCanvas, loadImage;
-try {
-  const { Canvas, loadImage: skiaLoadImage } = require('skia-canvas');
-  createCanvas = (w, h) => new Canvas(w, h);
-  loadImage = skiaLoadImage;
-  console.log('Using skia-canvas');
-} catch (err) {
-  console.log('Skia-canvas not available, using mock canvas');
-  createCanvas = (w, h) => ({ width: w, height: h });
-  loadImage = (path) => Promise.resolve({ width: 15, height: 15 });
-}
+const { SimpleCanvas } = require('./simple-canvas');
+const createCanvas = (w, h) => new SimpleCanvas(w, h);
+const loadImage = (path) => Promise.resolve({ width: 15, height: 15 });
+console.log('Using simple canvas implementation');
 const fs = require('fs');
 const path = require('path');
 let ws281x;
@@ -42,29 +35,8 @@ const width = 15;
 const height = 15;
 let pixelData = new Uint32Array(225);
 const serverPort = 80;
-let canvas, ctx;
-try {
-  canvas = createCanvas(width, height);
-  ctx = canvas.getContext('2d');
-  console.log('Canvas initialized');
-} catch (err) {
-  console.log('Canvas failed, using mock');
-  canvas = { width, height };
-  ctx = {
-    clearRect: () => {},
-    fillRect: () => {},
-    fillText: () => {},
-    drawImage: () => {},
-    arc: () => {},
-    fill: () => {},
-    stroke: () => {},
-    beginPath: () => {},
-    closePath: () => {},
-    measureText: () => ({ width: 50 }),
-    getImageData: () => ({ data: new Array(width * height * 4).fill(0) }),
-    putImageData: () => {}
-  };
-}
+const canvas = createCanvas(width, height);
+const ctx = canvas.getContext('2d');
 
 // Manage state.
 // Initial values here represent default startup state.
@@ -569,31 +541,27 @@ function setBrightness(level) {
 
 // Convert canvas to pixel data for direct GPIO control.
 function updatePixelData() {
-  try {
-    const imageData = ctx.getImageData(0, 0, width, height).data;
-    const rowWidth = width * 4;
-    
-    for (let index = 0; index < width * height * 4; index = index + 4) {
-      let offset = index;
-      let row = Math.floor(index / 4 / width);
-      let pixelIndex = Math.floor(index / 4);
+  const imageData = ctx.getImageData(0, 0, width, height).data;
+  const rowWidth = width * 4;
+  
+  for (let index = 0; index < width * height * 4; index = index + 4) {
+    let offset = index;
+    let row = Math.floor(index / 4 / width);
+    let pixelIndex = Math.floor(index / 4);
 
-      // Even rows need to be read backwards for snake pattern
-      if (row & 1) {
-        const rowStart = rowWidth * row;
-        const rowEnd = rowStart + rowWidth;
-        offset = rowStart + (rowEnd - index - 4);
-        pixelIndex = row * width + (width - 1 - (pixelIndex % width));
-      }
-
-      const r = imageData[offset];
-      const g = imageData[offset + 1];
-      const b = imageData[offset + 2];
-      
-      pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
+    // Even rows need to be read backwards for snake pattern
+    if (row & 1) {
+      const rowStart = rowWidth * row;
+      const rowEnd = rowStart + rowWidth;
+      offset = rowStart + (rowEnd - index - 4);
+      pixelIndex = row * width + (width - 1 - (pixelIndex % width));
     }
-  } catch (err) {
-    // Skip canvas operations if canvas failed
+
+    const r = imageData[offset];
+    const g = imageData[offset + 1];
+    const b = imageData[offset + 2];
+    
+    pixelData[pixelIndex] = (r << 16) | (g << 8) | b;
   }
 }
 
@@ -659,7 +627,7 @@ httpServer.listen(serverPort, null, () => {
 app.use("/", express.static("./interface/"));
 
 const nm = `./node_modules`;
-app.use("/axios", express.static(`${nm}/axios/dist/`));
+
 app.use("/images", express.static(`./images/`));
 app.use(express.json());
 

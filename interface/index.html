@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Dorian's Mosaic Controller</title>
-  <script src="https://unpkg.com/axios@1.7.7/dist/axios.min.js"></script>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
   <link rel="stylesheet" href="interface.css">
 </head>
@@ -113,7 +113,11 @@
   function post(name, opts = true) {
     const data = {};
     data[name] = opts;
-    return axios.post('data', data);
+    return fetch('data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
   }
 
   // Bind buttons.
@@ -156,7 +160,11 @@
 
   // Bind Brightness Slider.
   document.getElementById('brightness').addEventListener('change', (e) => {
-    axios.post('bright', {brightness: e.target.value});
+    fetch('bright', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({brightness: e.target.value})
+    });
   });
 
   // Add power options
@@ -195,9 +203,9 @@
         <td>${entry.brightness}</td>
         <td>${JSON.stringify(entry.options)}</td>
         <td>
-          <button class="button is-secondary is-small" onclick="axios.put('schedule/${time}')">👁️</button>
-          <button class="button is-primary is-small" onclick="axios.post('schedule', {time: '${time}'}).then(buildSchedule)">🔄</button>
-          <button class="button is-danger is-small" onclick="axios.delete('schedule/${time}').then(buildSchedule)">🗑️</button>
+          <button class="button is-secondary is-small" onclick="fetch('schedule/${time}', {method: 'PUT'})">👁️</button>
+          <button class="button is-primary is-small" onclick="fetch('schedule', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({time: '${time}'})}).then(() => fetch('schedule').then(r => r.json()).then(buildSchedule))">🔄</button>
+          <button class="button is-danger is-small" onclick="fetch('schedule/${time}', {method: 'DELETE'}).then(() => fetch('schedule').then(r => r.json()).then(buildSchedule))">🗑️</button>
         </td>
       `;
       tbody.appendChild(row);
@@ -205,17 +213,19 @@
   }
 
   // Get initial schedule, bind buttons.
-  axios.get('schedule').then(buildSchedule);
+  fetch('schedule').then(r => r.json()).then(buildSchedule);
   document.querySelector('#schedule tfoot button').addEventListener('click', () => {
-    axios.post('schedule', {
-      time: document.querySelector('#schedule tfoot input').value,
-    }).then(buildSchedule);
+    fetch('schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ time: document.querySelector('#schedule tfoot input').value })
+    }).then(r => r.json()).then(buildSchedule);
   });
 
   
 
   // Get the images.
-  axios.get('data').then(({ data }) => {
+  fetch('data').then(r => r.json()).then((data) => {
     const images = document.getElementById('images');
     images.innerHTML = '';
     Object.entries(data.images).forEach(([name, { fps }]) => {

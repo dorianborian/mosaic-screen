@@ -6,15 +6,12 @@
   "scripts": {
     "start": "sudo node index",
     "dev": "node index",
-    "preinstall": "node setup.js"
+    "setup": "node setup.js"
   },
   "author": "techninja",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.7.7",
-
     "express": "^4.21.1",
-    "rpi-ws281x-native": "^1.0.4",
-    "skia-canvas": "^1.0.2"
+    "rpi-ws281x-native": "^1.0.4"
   }
 }
