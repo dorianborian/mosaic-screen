@@ -594,6 +594,7 @@ function renderTerminal() {
 
 // Update pixels and render to GPIO.
 function renderFrame() {
+  frameCount++;
   updatePixelData();
   checkSetStateFromSchedule();
   
@@ -611,6 +612,13 @@ function renderFrame() {
   }
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
+
+// Debug frame counter
+let frameCount = 0;
+setInterval(() => {
+  console.log(`Frames rendered: ${frameCount}, Mode: ${globalState.mode}`);
+  frameCount = 0;
+}, 5000);
 
 // Initialize GPIO NeoPixel control.
 let channel;
@@ -634,6 +642,8 @@ setFromState(globalState);
 
 // Read the schedule.
 readSchedule();
+
+console.log('Server starting, initial state:', globalState);
 
 // Cleanup on exit
 process.on('SIGINT', () => {
