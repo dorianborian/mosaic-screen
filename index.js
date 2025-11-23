@@ -270,9 +270,9 @@ function drawClock(color) {
   
   // Big font layout for 2-line clock: each line fits 2 digits
   // Hours: position to fit 2 digits in top half
-  ctx.fillText(hoursStr, 1, 0);     
+  ctx.fillText(hoursStr, 2, 0);     
   // Minutes: position to fit 2 digits + dot in bottom half  
-  ctx.fillText(minutesStr, 1, 7);   
+  ctx.fillText(minutesStr, 2, 7);   
 }
 
 // Clock mode!
@@ -516,12 +516,25 @@ function plasma({ withClock = false, flipClock = false }) {
         img.data[pos + 2] = rgb.b;
         img.data[pos + 3] = 255;
 
-        // Erase pixels to black that aren't filled.
+        // Apply clock masking
         if (withClock) {
-          if (!!ctx.getImageData(x, y, 1, 1).data[0] == flipClock) {
-            img.data[pos] = 0;
-            img.data[pos + 1] = 0;
-            img.data[pos + 2] = 0;
+          const clockPixelIndex = (y * w + x) * 4;
+          const hasClockPixel = ctx.pixels[clockPixelIndex] > 0 || ctx.pixels[clockPixelIndex + 1] > 0 || ctx.pixels[clockPixelIndex + 2] > 0;
+          
+          if (flipClock) {
+            // Inverted: show plasma where clock text is, black elsewhere
+            if (!hasClockPixel) {
+              img.data[pos] = 0;
+              img.data[pos + 1] = 0;
+              img.data[pos + 2] = 0;
+            }
+          } else {
+            // Normal: show plasma as background, keep clock text visible
+            if (hasClockPixel) {
+              img.data[pos] = ctx.pixels[clockPixelIndex];
+              img.data[pos + 1] = ctx.pixels[clockPixelIndex + 1];
+              img.data[pos + 2] = ctx.pixels[clockPixelIndex + 2];
+            }
           }
         }
       }
