@@ -7,7 +7,16 @@
     "start": "sudo node index",
     "dev": "node index",
     "setup": "node setup.js",
-    "generate-fonts": "node generate-font-pngs.js"
+    "generate-fonts": "node generate-font-pngs.js",
+    "service:install": "sudo node service.js install",
+    "service:uninstall": "sudo node service.js uninstall",
+    "service:start": "sudo systemctl start mosaic-screen",
+    "service:stop": "sudo systemctl stop mosaic-screen",
+    "service:restart": "sudo systemctl restart mosaic-screen",
+    "service:status": "sudo systemctl status mosaic-screen",
+    "service:logs": "sudo journalctl -u mosaic-screen -f",
+    "service:enable": "sudo systemctl enable mosaic-screen",
+    "service:disable": "sudo systemctl disable mosaic-screen"
   },
   "author": "techninja",
   "license": "MIT",
