@@ -341,8 +341,10 @@ function scrollText({
   // Start at right side.
   let x = width;
 
-  // Center height based on font size
-  let y = size === "big" ? 4 : 1;
+  // Center text vertically and horizontally
+  let y = size === "big" ? 4 : 6;
+  const textHeight = size === "big" ? 6 : 5;
+  y = Math.floor((height - textHeight) / 2);
   
   return setInterval(() => {
     x = x - speed / 5; // Move to the left.
