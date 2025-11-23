@@ -304,10 +304,10 @@ function rotateModes(seconds) {
     { image: "nyan" },
     { image: "maker" },
 
-    { plasma: true },
-    { plasma: true },
-    { plasma: true },
-    { plasma: true },
+    { plasma: {} },
+    { plasma: {} },
+    { plasma: {} },
+    { plasma: {} },
   ];
 
   const pickNext = () => {
@@ -456,13 +456,20 @@ function changeColor(color) {
 }
 
 // Run the random plasma animation at 60fps.
-function plasma({ withClock = false, flipClock = false }) {
+function plasma({ 
+  modA = Math.random() * 64, 
+  modB = Math.random() * 64, 
+  modC = Math.random() * 64,
+  withClock = false, 
+  invert = false,
+  clockColor = '#ffffff',
+  bgColor = '#000000',
+  plasmaBrightness = 1.0
+}) {
   var w = canvas.width;
   var h = canvas.height;
-
   var buffer = new Array(h);
-
-  const mod = [Math.random() * 64, Math.random() * 64, Math.random() * 64];
+  const mod = [modA, modB, modC];
 
   for (var y = 0; y < h; y++) {
     buffer[y] = new Array(w);
@@ -471,21 +478,22 @@ function plasma({ withClock = false, flipClock = false }) {
       value += Math.sin(y / 8.0 / mod[1]);
       value += Math.sin((x + y) / 16.0 / mod[0]);
       value += Math.sin(Math.sqrt(x * x + y * y) / 8.0 / mod[1]);
-      value += 4 / mod[2]; // shift range from -4 .. 4 to 0 .. 8
-      value /= 8 / mod[2]; // bring range down to 0 .. 1
+      value += 4 / mod[2];
+      value /= 8 / mod[2];
       buffer[y][x] = value;
     }
   }
 
   var plasma = buffer;
   var hueShift = 0;
+  const bgRGB = hexToRGB(bgColor);
+  const clockRGB = hexToRGB(clockColor);
 
   return setInterval(() => {
-    // Generate plasma background first
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         var hue = hueShift + (plasma[y][x] % 1);
-        var rgb = HSVtoRGB(hue, plasma[y][x], plasma[y][x]);
+        var rgb = HSVtoRGB(hue, plasma[y][x], plasma[y][x] * plasmaBrightness);
         var pos = (y * w + x) * 4;
         
         ctx.pixels[pos] = rgb.r;
@@ -496,30 +504,52 @@ function plasma({ withClock = false, flipClock = false }) {
     }
     
     if (withClock) {
-      // Draw clock on top of plasma
       const time = new Date();
       const minutes = time.getMinutes().toString().padStart(2, '0');
       let hours = time.getHours();
       let isPM = hours >= 12;
       
-      if (hours > 12) {
-        hours = hours - 12;
-      }
-      if (hours === 0) {
-        hours = 12;
-      }
+      if (hours > 12) hours = hours - 12;
+      if (hours === 0) hours = 12;
 
       const hoursStr = hours.toString().padStart(2, '0');
       const minutesStr = minutes + (isPM ? '.' : ' ');
       
-      ctx.fillStyle = flipClock ? "black" : "white";
-      ctx.font = 'big';
+      ctx.fillStyle = invert ? clockColor : bgColor;
+      ctx.font = 'medium';
       ctx.fillText(hoursStr, 2, 1);
       ctx.fillText(minutesStr, 2, 8);
+      
+      if (invert) {
+        const imageData = ctx.getImageData(0, 0, w, h);
+        for (var y = 0; y < h; y++) {
+          for (var x = 0; x < w; x++) {
+            var pos = (y * w + x) * 4;
+            if (imageData.data[pos + 3] > 0) {
+              var hue = hueShift + (plasma[y][x] % 1);
+              var rgb = HSVtoRGB(hue, plasma[y][x], plasma[y][x] * plasmaBrightness);
+              ctx.pixels[pos] = rgb.r;
+              ctx.pixels[pos + 1] = rgb.g;
+              ctx.pixels[pos + 2] = rgb.b;
+            } else {
+              ctx.pixels[pos] = clockRGB.r;
+              ctx.pixels[pos + 1] = clockRGB.g;
+              ctx.pixels[pos + 2] = clockRGB.b;
+            }
+          }
+        }
+      }
     }
 
     hueShift = (hueShift + 0.01) % 1;
   }, Math.round(1000 / 60));
+}
+
+function hexToRGB(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
 }
 
 // Convert Hue, Saturation, & Brightness to Red, Green, & Blue

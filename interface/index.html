@@ -109,6 +109,34 @@
 
 <div class="box">
   <label class="label">
+    <span>Plasma:</span>
+  </label>
+  <div class="field" id="plasma">
+    <label>Mod A:</label>
+    <input type="number" id="plasma-a" placeholder="random" step="0.1" min="0.1" max="64">
+    <label>Mod B:</label>
+    <input type="number" id="plasma-b" placeholder="random" step="0.1" min="0.1" max="64">
+    <label>Mod C:</label>
+    <input type="number" id="plasma-c" placeholder="random" step="0.1" min="0.1" max="64">
+    <br>
+    <label>Plasma Brightness:</label>
+    <input type="range" id="plasma-brightness" min="0.1" max="1" step="0.1" value="1">
+    <span id="plasma-brightness-val">1.0</span>
+    <br>
+    <label><input type="checkbox" id="plasma-clock"> Show Clock</label>
+    <label><input type="checkbox" id="plasma-invert"> Invert (plasma on text)</label>
+    <br>
+    <label>Clock Color:</label>
+    <input type="color" id="plasma-clock-color" value="#ffffff">
+    <label>BG Color:</label>
+    <input type="color" id="plasma-bg-color" value="#000000">
+    <br>
+    <button class="button is-primary" id="plasma-apply">Apply Plasma</button>
+  </div>
+</div>
+
+<div class="box">
+  <label class="label">
     <span>Power:</span>
   </label>
   <div class="field" id="power">
@@ -244,24 +272,31 @@
       btn.addEventListener('click', () => post('image', name));
       images.appendChild(btn);
     });
+  });
 
-    // Add plasma modes
-    const plasmaBtn = document.createElement('button');
-    plasmaBtn.textContent = 'Plasma!';
-    plasmaBtn.addEventListener('click', () => post('plasma', {}));
-    images.appendChild(plasmaBtn);
+  // Plasma controls
+  document.getElementById('plasma-brightness').addEventListener('input', (e) => {
+    document.getElementById('plasma-brightness-val').textContent = e.target.value;
+  });
 
-    const pclockBtn = document.createElement('button');
-    pclockBtn.style.backgroundImage = 'url("/images/plasma.png")';
-    pclockBtn.textContent = 'PClock';
-    pclockBtn.addEventListener('click', () => post('plasma', {withClock: true}));
-    images.appendChild(pclockBtn);
-
-    const flipPclockBtn = document.createElement('button');
-    flipPclockBtn.style.backgroundImage = 'url("/images/plasma.png")';
-    flipPclockBtn.textContent = '!PClock';
-    flipPclockBtn.addEventListener('click', () => post('plasma', {withClock: true, flipClock: true}));
-    images.appendChild(flipPclockBtn);
+  document.getElementById('plasma-apply').addEventListener('click', () => {
+    const opts = {
+      withClock: document.getElementById('plasma-clock').checked,
+      invert: document.getElementById('plasma-invert').checked,
+      clockColor: document.getElementById('plasma-clock-color').value,
+      bgColor: document.getElementById('plasma-bg-color').value,
+      plasmaBrightness: parseFloat(document.getElementById('plasma-brightness').value)
+    };
+    
+    const modA = document.getElementById('plasma-a').value;
+    const modB = document.getElementById('plasma-b').value;
+    const modC = document.getElementById('plasma-c').value;
+    
+    if (modA) opts.modA = parseFloat(modA);
+    if (modB) opts.modB = parseFloat(modB);
+    if (modC) opts.modC = parseFloat(modC);
+    
+    post('plasma', opts);
   });
 </script>
 </body>
