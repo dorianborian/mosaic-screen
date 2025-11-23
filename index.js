@@ -334,7 +334,7 @@ function scrollText({ color = "blue", text, size = "small", speed = 2 }) {
   return setInterval(() => {
     clearScreen();
     ctx.fillText(text, Math.floor(x), y);
-    x -= speed;
+    x -= speed / 10;
     if (x < -textSize.width) x = width;
   }, Math.round(1000 / 30));
 }

@@ -90,6 +90,7 @@
     <label for="font-size">Font:</label>
     <select id="font-size">
       <option value="small">Small</option>
+      <option value="medium">Medium</option>
       <option value="big">Big</option>
     </select>
     <input type="text" id="text-input" value="Sample text">
@@ -152,14 +153,19 @@
     post('ball', e.target.value);
   });
 
-  document.getElementById('text-color').addEventListener('change', (e) => {
+  function updateScroll() {
     post('scroll', {
       text: document.getElementById('text-input').value,
       size: document.getElementById('font-size').value,
       speed: document.getElementById('speed').value,
-      color: e.target.value,
+      color: document.getElementById('text-color').value,
     });
-  });
+  }
+
+  document.getElementById('text-color').addEventListener('change', updateScroll);
+  document.getElementById('text-input').addEventListener('change', updateScroll);
+  document.getElementById('font-size').addEventListener('change', updateScroll);
+  document.getElementById('speed').addEventListener('change', updateScroll);
 
   // Bind Brightness Slider.
   document.getElementById('brightness').addEventListener('change', (e) => {
