@@ -324,37 +324,18 @@ function rotateModes(seconds) {
   return setInterval(pickNext, seconds * 1000);
 }
 
-// Add custom scrolling text from left to right.
-function scrollText({
-  color = "blue",
-  text,
-  size = "small",
-  speed = 2,
-}) {
+function scrollText({ color = "blue", text, size = "small", speed = 2 }) {
   ctx.fillStyle = color;
-  ctx.font = size === "big" ? "big" : "";
+  ctx.font = size === "big" ? "big" : size === "medium" ? "medium" : "";
   const textSize = ctx.measureText(text);
-
-  // Buffer off the right of the text, gives screen a break, in pixels.
-  const buffer = 10;
-
-  // Start at right side.
+  const y = Math.floor((height - (size === "big" ? 13 : size === "medium" ? 6 : 5)) / 2);
   let x = width;
-
-  // Center text vertically and horizontally
-  let y = size === "big" ? 4 : 6;
-  const textHeight = size === "big" ? 6 : 5;
-  y = Math.floor((height - textHeight) / 2);
   
   return setInterval(() => {
-    x = x - speed / 5; // Move to the left.
-
     clearScreen();
     ctx.fillText(text, Math.floor(x), y);
-
-    if (x < -(textSize.width + buffer)) {
-      x = width;
-    }
+    x -= speed;
+    if (x < -textSize.width) x = width;
   }, Math.round(1000 / 30));
 }
 
