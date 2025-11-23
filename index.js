@@ -552,7 +552,7 @@ function plasma({
     }
 
     hueShift = (hueShift + 0.01) % 1;
-  }, Math.round(1000 / 60));}
+  }, Math.round(1000 / 60));
 }
 
 function hexToRGB(hex) {
