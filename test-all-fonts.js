@@ -21,19 +21,35 @@ for (let y = 0; y < 5; y++) {
   console.log(row);
 }
 
-console.log('\nBig font - Numbers:');
+console.log('\nMedium font - Numbers and letters:');
 const canvas2 = new SimpleCanvas(termWidth, 6);
 const ctx2 = canvas2.getContext('2d');
 ctx2.fillStyle = '#ffffff';
-ctx2.font = 'big';
+ctx2.font = 'medium';
 ctx2.fillText('0123456789', 0, 0);
 
-// Show big font (6 pixels high)
 for (let y = 0; y < 6; y++) {
   let row = '';
   for (let x = 0; x < termWidth; x++) {
     const i = (y * termWidth + x) * 4;
     const r = ctx2.pixels[i];
+    row += r > 0 ? '█' : '·';
+  }
+  console.log(row);
+}
+
+console.log('\nBig font - Numbers:');
+const canvas3 = new SimpleCanvas(termWidth, 13);
+const ctx3 = canvas3.getContext('2d');
+ctx3.fillStyle = '#ffffff';
+ctx3.font = 'big';
+ctx3.fillText('0123456789', 0, 0);
+
+for (let y = 0; y < 13; y++) {
+  let row = '';
+  for (let x = 0; x < termWidth; x++) {
+    const i = (y * termWidth + x) * 4;
+    const r = ctx3.pixels[i];
     row += r > 0 ? '█' : '·';
   }
   console.log(row);

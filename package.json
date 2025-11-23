@@ -6,7 +6,8 @@
   "scripts": {
     "start": "sudo node index",
     "dev": "node index",
-    "setup": "node setup.js"
+    "setup": "node setup.js",
+    "generate-fonts": "node generate-font-pngs.js"
   },
   "author": "techninja",
   "license": "MIT",
