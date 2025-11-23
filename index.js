@@ -266,13 +266,13 @@ function drawClock(color) {
   const minutesStr = minutes + (isPM ? '.' : ' ');
   
   ctx.fillStyle = color;
-  ctx.font = 'big';
+  ctx.font = 'medium';
   
-  // Big font layout for 2-line clock: each line fits 2 digits
+  // Medium font layout for 2-line clock: each line fits 2 digits
   // Hours: position to fit 2 digits in top half
-  ctx.fillText(hoursStr, 2, 1);     
+  ctx.fillText(hoursStr, 3, 1);     
   // Minutes: position to fit 2 digits + dot in bottom half  
-  ctx.fillText(minutesStr, 2, 8);   
+  ctx.fillText(minutesStr, 3, 8);   
 }
 
 // Clock mode!
