@@ -265,12 +265,14 @@ function drawClock(color) {
   const hoursStr = hours.toString().padStart(2, '0');
   const minutesStr = minutes + (isPM ? '.' : ' ');
   
-  // Center the text (3 chars wide + spacing = ~7 pixels, center at x=4)
-  const centerX = 4;
-  
   ctx.fillStyle = color;
-  ctx.fillText(hoursStr, centerX, 2);     // Hours centered
-  ctx.fillText(minutesStr, centerX, 8);   // Minutes centered
+  ctx.font = 'big';
+  
+  // Big font layout for 2-line clock: each line fits 2 digits
+  // Hours: position to fit 2 digits in top half
+  ctx.fillText(hoursStr, 1, 0);     
+  // Minutes: position to fit 2 digits + dot in bottom half  
+  ctx.fillText(minutesStr, 1, 7);   
 }
 
 // Clock mode!
