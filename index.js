@@ -328,14 +328,11 @@ function rotateModes(seconds) {
 function scrollText({
   color = "blue",
   text,
-  size = "9",
-  font = "Arial",
+  size = "small",
   speed = 2,
-  baseline = 0,
 }) {
   ctx.fillStyle = color;
-  ctx.font = `${size}px ${font}`;
-  text = text.split("").join(String.fromCharCode(8202));
+  ctx.font = size === "big" ? "big" : "";
   const textSize = ctx.measureText(text);
 
   // Buffer off the right of the text, gives screen a break, in pixels.
@@ -344,8 +341,9 @@ function scrollText({
   // Start at right side.
   let x = width;
 
-  // Center height.
-  let y = 10 + baseline;
+  // Center height based on font size
+  let y = size === "big" ? 4 : 1;
+  
   return setInterval(() => {
     x = x - speed / 5; // Move to the left.
 
