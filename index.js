@@ -270,9 +270,9 @@ function drawClock(color) {
   
   // Big font layout for 2-line clock: each line fits 2 digits
   // Hours: position to fit 2 digits in top half
-  ctx.fillText(hoursStr, 2, 0);     
+  ctx.fillText(hoursStr, 2, 1);     
   // Minutes: position to fit 2 digits + dot in bottom half  
-  ctx.fillText(minutesStr, 2, 7);   
+  ctx.fillText(minutesStr, 2, 8);   
 }
 
 // Clock mode!
@@ -500,47 +500,43 @@ function plasma({ withClock = false, flipClock = false }) {
   var hueShift = 0;
 
   return setInterval(() => {
-    if (withClock) {
-      clearScreen();
-      drawClock("white");
-    }
-
-    var img = ctx.getImageData(0, 0, w, h);
+    // Generate plasma background first
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         var hue = hueShift + (plasma[y][x] % 1);
         var rgb = HSVtoRGB(hue, plasma[y][x], plasma[y][x]);
         var pos = (y * w + x) * 4;
-        img.data[pos] = rgb.r;
-        img.data[pos + 1] = rgb.g;
-        img.data[pos + 2] = rgb.b;
-        img.data[pos + 3] = 255;
-
-        // Apply clock masking
-        if (withClock) {
-          const clockPixelIndex = (y * w + x) * 4;
-          const hasClockPixel = ctx.pixels[clockPixelIndex] > 0 || ctx.pixels[clockPixelIndex + 1] > 0 || ctx.pixels[clockPixelIndex + 2] > 0;
-          
-          if (flipClock) {
-            // Inverted: show plasma where clock text is, black elsewhere
-            if (!hasClockPixel) {
-              img.data[pos] = 0;
-              img.data[pos + 1] = 0;
-              img.data[pos + 2] = 0;
-            }
-          } else {
-            // Normal: show plasma as background, keep clock text visible
-            if (hasClockPixel) {
-              img.data[pos] = ctx.pixels[clockPixelIndex];
-              img.data[pos + 1] = ctx.pixels[clockPixelIndex + 1];
-              img.data[pos + 2] = ctx.pixels[clockPixelIndex + 2];
-            }
-          }
-        }
+        
+        ctx.pixels[pos] = rgb.r;
+        ctx.pixels[pos + 1] = rgb.g;
+        ctx.pixels[pos + 2] = rgb.b;
+        ctx.pixels[pos + 3] = 255;
       }
     }
+    
+    if (withClock) {
+      // Draw clock on top of plasma
+      const time = new Date();
+      const minutes = time.getMinutes().toString().padStart(2, '0');
+      let hours = time.getHours();
+      let isPM = hours >= 12;
+      
+      if (hours > 12) {
+        hours = hours - 12;
+      }
+      if (hours === 0) {
+        hours = 12;
+      }
 
-    ctx.putImageData(img, 0, 0);
+      const hoursStr = hours.toString().padStart(2, '0');
+      const minutesStr = minutes + (isPM ? '.' : ' ');
+      
+      ctx.fillStyle = flipClock ? "black" : "white";
+      ctx.font = 'big';
+      ctx.fillText(hoursStr, 2, 1);
+      ctx.fillText(minutesStr, 2, 8);
+    }
+
     hueShift = (hueShift + 0.01) % 1;
   }, Math.round(1000 / 60));
 }
