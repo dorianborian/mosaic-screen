@@ -70,7 +70,7 @@ class SimpleCanvas {
     const { charWidth, charHeight, patterns } = fontData;
     
     let offsetX = 0;
-    for (const char of text.toUpperCase()) {
+    for (const char of text) {
       const pattern = patterns[char];
       if (pattern) {
         for (let py = 0; py < charHeight; py++) {
