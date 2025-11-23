@@ -75,8 +75,10 @@ class SimpleCanvas {
       if (pattern) {
         for (let py = 0; py < charHeight; py++) {
           for (let px = 0; px < charWidth; px++) {
-            if (pattern[py] && pattern[py][px] && x + offsetX + px < this.width && y + py < this.height && y + py >= 0) {
-              const i = ((y + py) * this.width + (x + offsetX + px)) * 4;
+            const drawX = x + offsetX + px;
+            const drawY = y + py;
+            if (pattern[py] && pattern[py][px] && drawX >= 0 && drawX < this.width && drawY >= 0 && drawY < this.height) {
+              const i = (drawY * this.width + drawX) * 4;
               this.pixels[i] = color.r;
               this.pixels[i + 1] = color.g;
               this.pixels[i + 2] = color.b;
@@ -147,7 +149,15 @@ class SimpleCanvas {
   }
 
   measureText(text) {
-    return { width: text.length * 4 };
+    let fontData;
+    if (this.font.includes('big')) {
+      fontData = fonts.big;
+    } else if (this.font.includes('medium')) {
+      fontData = fonts.medium;
+    } else {
+      fontData = fonts.mini;
+    }
+    return { width: text.length * (fontData.charWidth + 1) };
   }
 
   hexToRgb(hex) {
