@@ -4,43 +4,31 @@
 const { SimpleCanvas } = require('./simple-canvas');
 const createCanvas = (w, h) => new SimpleCanvas(w, h);
 
-// Load GIF as horizontal sprite sheet (already in left-to-right format)
+// Load PNG sprite sheets
 const loadImage = (path) => {
   return new Promise((resolve) => {
     try {
-      const gifFrames = require('gif-frames');
+      const fs = require('fs');
+      const { PNG } = require('pngjs');
       
-      gifFrames({ url: path, frames: 0, outputType: 'canvas' })
-        .then((frameData) => {
-          const canvas = frameData[0].getImage();
-          const ctx = canvas.getContext('2d');
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          
-          console.log(`GIF loaded: ${canvas.width}x${canvas.height}`);
-          // Sample first few pixels
-          for (let i = 0; i < Math.min(20, imageData.data.length); i += 4) {
-            const r = imageData.data[i];
-            const g = imageData.data[i + 1];
-            const b = imageData.data[i + 2];
-            const a = imageData.data[i + 3];
-            if (r || g || b) {
-              console.log(`Pixel ${i/4}: [${r},${g},${b},${a}]`);
-              break;
-            }
-          }
-          
-          resolve({ 
-            width: canvas.width, 
-            height: canvas.height, 
-            data: imageData.data 
-          });
-        })
-        .catch((err) => {
-          console.log('GIF loading failed:', err.message);
-          resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
+      // Convert .gif path to .png
+      const pngPath = path.replace('.gif', '.png');
+      
+      if (fs.existsSync(pngPath)) {
+        const buffer = fs.readFileSync(pngPath);
+        const png = PNG.sync.read(buffer);
+        
+        resolve({
+          width: png.width,
+          height: png.height,
+          data: png.data
         });
+      } else {
+        console.log(`PNG file not found: ${pngPath}`);
+        resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
+      }
     } catch (err) {
-      console.log('GIF loading error:', err.message);
+      console.log('PNG loading error:', err.message);
       resolve({ width: 60, height: 15, data: new Uint8ClampedArray(60 * 15 * 4) });
     }
   });
@@ -99,9 +87,11 @@ const appData = {
 // Load images.
 const images = fs.readdirSync(animPath);
 images.forEach(file => {
-  const name = file.split('.')[0];
-  const parts = name.split('_');
-  appData.images[parts[0]] = { fps: parts[1]};
+  if (file.endsWith('.png')) {
+    const name = file.split('.')[0];
+    const parts = name.split('_');
+    appData.images[parts[0]] = { fps: parts[1]};
+  }
 });
 
 
