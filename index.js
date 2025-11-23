@@ -251,25 +251,26 @@ const getRand = (max, exclude) => {
 // Draw a clock with a color.
 function drawClock(color) {
   const time = new Date();
-  const minutes = time.getMinutes();
-  let PM = " ";
+  const minutes = time.getMinutes().toString().padStart(2, '0');
   let hours = time.getHours();
+  let isPM = hours >= 12;
+  
   if (hours > 12) {
     hours = hours - 12;
-    PM = ".";
   }
-
   if (hours === 0) {
     hours = 12;
   }
 
+  const hoursStr = hours.toString().padStart(2, '0');
+  const minutesStr = minutes + (isPM ? '.' : ' ');
+  
+  // Center the text (3 chars wide + spacing = ~7 pixels, center at x=4)
+  const centerX = 4;
+  
   ctx.fillStyle = color;
-  ctx.font = `8px Minecraftia`;
-  ctx.fillText(`${hours}`, 1, 12);
-
-  ctx.fillStyle = color;
-  ctx.font = `8px Minecraftia`;
-  ctx.fillText(`${minutes}${PM}`.padStart(3, "0"), 1, 20);
+  ctx.fillText(hoursStr, centerX, 2);     // Hours centered
+  ctx.fillText(minutesStr, centerX, 8);   // Minutes centered
 }
 
 // Clock mode!
