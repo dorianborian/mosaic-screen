@@ -230,7 +230,7 @@
     images.innerHTML = '';
     Object.entries(data.images).forEach(([name, { fps }]) => {
       const btn = document.createElement('button');
-      btn.style.backgroundImage = `url("/images/animations/${name}_${fps}.gif")`;
+      btn.style.backgroundImage = `url("/images/animations/${name}_${fps}.png")`;
       btn.textContent = name;
       btn.addEventListener('click', () => post('image', name));
       images.appendChild(btn);
@@ -243,13 +243,13 @@
     images.appendChild(plasmaBtn);
 
     const pclockBtn = document.createElement('button');
-    pclockBtn.style.backgroundImage = 'url("/images/plasma.gif")';
+    pclockBtn.style.backgroundImage = 'url("/images/plasma.png")';
     pclockBtn.textContent = 'PClock';
     pclockBtn.addEventListener('click', () => post('plasma', {withClock: true}));
     images.appendChild(pclockBtn);
 
     const flipPclockBtn = document.createElement('button');
-    flipPclockBtn.style.backgroundImage = 'url("/images/plasma.gif")';
+    flipPclockBtn.style.backgroundImage = 'url("/images/plasma.png")';
     flipPclockBtn.textContent = '!PClock';
     flipPclockBtn.addEventListener('click', () => post('plasma', {withClock: true, flipClock: true}));
     images.appendChild(flipPclockBtn);

@@ -105,8 +105,7 @@ const httpServer = http.createServer(app);
 let currentInterval = null; // Interval for the currently running mode
 let rotationModeInterval = null; // Interval within the rotation mode
 function changeScreen(change) {
-  // Debug!:
-  // console.log('Got request:', change);
+  console.log('Mode change request:', change);
 
   // Run the screen promise, then reset the current global interval.
   runScreen(change).then((interval) => {
@@ -403,13 +402,9 @@ function animImage(name) {
   }
 
   const { fps } = appData.images[name];
-  console.log(`Loading animation: ${name}, fps: ${fps}`);
-
   return new Promise((done) => {
     loadImage(`${animPath}/${name}_${fps}.gif`).then((image) => {
-      console.log(`Loaded image: ${image.width}x${image.height}`);
       const frames = Math.floor(image.width / width);
-      console.log(`Calculated ${frames} frames`);
       let frame = 0;
       
       const interval = setInterval(() => {
@@ -422,14 +417,10 @@ function animImage(name) {
         
         if (image.data && image.data.length > 0) {
           ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
-          // Debug: check if anything was drawn
-          const testPixel = ctx.getImageData(7, 7, 1, 1).data;
-          console.log(`Frame ${frame}: center pixel [${testPixel[0]},${testPixel[1]},${testPixel[2]}]`);
         } else {
           // Fallback: draw colored square
           ctx.fillStyle = frame % 2 ? '#ff0000' : '#00ff00';
           ctx.fillRect(5, 5, 5, 5);
-          console.log(`Fallback frame ${frame}`);
         }
         
         frame++;
@@ -665,10 +656,7 @@ function renderFrame() {
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
-// Debug mode announcements
-setInterval(() => {
-  console.log(`Mode: ${globalState.mode}`);
-}, 10000);
+
 
 // Initialize GPIO NeoPixel control.
 let channel;
