@@ -459,11 +459,9 @@ function animImage(name) {
       
       const interval = setInterval(() => {
         if (frame >= frames) frame = 0;
-        
         if (image.data && image.data.length > 0) {
           ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
         }
-        
         frame++;
       }, Math.round(1000 / fps));
       done(interval);

@@ -134,7 +134,7 @@ class SimpleCanvas {
             this.pixels[dstIndex] = img.data[srcIndex];
             this.pixels[dstIndex + 1] = img.data[srcIndex + 1];
             this.pixels[dstIndex + 2] = img.data[srcIndex + 2];
-            this.pixels[dstIndex + 3] = img.data[srcIndex + 3];
+            this.pixels[dstIndex + 3] = 255;
           }
         }
       }
