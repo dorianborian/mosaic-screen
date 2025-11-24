@@ -422,62 +422,51 @@ function applyTextOverlay() {
   
   if (!displayText) return;
   
+  const tempCanvas = createCanvas(width, height, true);
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.fillStyle = 'white';
+  tempCtx.font = textState.font;
+  
+  if (textState.scroll && !textState.useClock) {
+    const textSize = tempCtx.measureText(displayText);
+    const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
+    tempCtx.fillText(displayText, Math.floor(scrollX), y);
+    scrollX -= textState.speed / 10;
+    if (scrollX < -textSize.width) scrollX = width;
+  } else {
+    const lines = displayText.split('\n');
+    const yOffset = textState.useClock ? 1 : 0;
+    lines.forEach((line, i) => {
+      const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
+      tempCtx.fillText(line, textState.x, yOffset + i * lineHeight);
+    });
+  }
+  
   if (textState.invert) {
-    const bgPixels = new Uint8ClampedArray(ctx.pixels);
-    const tempCanvas = createCanvas(width, height, true);
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.fillStyle = 'white';
-    tempCtx.font = textState.font;
-    
-    if (textState.scroll && !textState.useClock) {
-      const textSize = tempCtx.measureText(displayText);
-      const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
-      tempCtx.fillText(displayText, Math.floor(scrollX), y);
-      scrollX -= textState.speed / 10;
-      if (scrollX < -textSize.width) scrollX = width;
-    } else {
-      const lines = displayText.split('\n');
-      const yOffset = textState.useClock ? 1 : 0;
-      lines.forEach((line, i) => {
-        const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
-        tempCtx.fillText(line, textState.x, yOffset + i * lineHeight);
-      });
-    }
-    
     const fgRGB = hexToRGB(textState.color);
     for (let i = 0; i < width * height; i++) {
       const pos = i * 4;
       const isText = tempCanvas.pixels[pos + 3] > 0;
-      if (isText) {
-        ctx.pixels[pos] = bgPixels[pos];
-        ctx.pixels[pos + 1] = bgPixels[pos + 1];
-        ctx.pixels[pos + 2] = bgPixels[pos + 2];
-      } else {
+      if (!isText) {
         ctx.pixels[pos] = fgRGB.r;
         ctx.pixels[pos + 1] = fgRGB.g;
         ctx.pixels[pos + 2] = fgRGB.b;
       }
     }
   } else {
-    ctx.fillStyle = textState.color;
-    ctx.font = textState.font;
-    
-    if (textState.scroll && !textState.useClock) {
-      const textSize = ctx.measureText(displayText);
-      const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
-      ctx.fillText(displayText, Math.floor(scrollX), y);
-      scrollX -= textState.speed / 10;
-      if (scrollX < -textSize.width) scrollX = width;
-    } else {
-      const lines = displayText.split('\n');
-      const yOffset = textState.useClock ? 1 : 0;
-      lines.forEach((line, i) => {
-        const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
-        ctx.fillText(line, textState.x, yOffset + i * lineHeight);
-      });
+    const fgRGB = hexToRGB(textState.color);
+    for (let i = 0; i < width * height; i++) {
+      const pos = i * 4;
+      const isText = tempCanvas.pixels[pos + 3] > 0;
+      if (isText) {
+        ctx.pixels[pos] = fgRGB.r;
+        ctx.pixels[pos + 1] = fgRGB.g;
+        ctx.pixels[pos + 2] = fgRGB.b;
+      }
     }
   }
 }
+
 
 // Animate a horizontal sprite sheet image over 15px square.
 let animBuffer = null;
@@ -684,6 +673,7 @@ function updatePixelData() {
 
 
 // Terminal display for debugging
+let lastDebugTime = 0;
 function renderTerminal() {
   const imageData = ctx.getImageData(0, 0, width, height).data;
   let output = '\x1b[2J\x1b[H'; // Clear screen and move cursor to top
@@ -705,6 +695,14 @@ function renderTerminal() {
     }
     output += '\n';
   }
+  
+  const now = Date.now();
+  if (now - lastDebugTime > 2000) {
+    output += `\nText: enabled=${textState.enabled} clock=${textState.useClock} scroll=${textState.scroll} invert=${textState.invert}\n`;
+    output += `Colors: fg=${textState.color} bg=${textState.bgColor} bgAlpha=${textState.bgAlpha}\n`;
+    lastDebugTime = now;
+  }
+  
   process.stdout.write(output);
 }
 
