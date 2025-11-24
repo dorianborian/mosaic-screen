@@ -232,6 +232,8 @@ function checkSetStateFromSchedule() {
 // Handler for running a change, returns a promise that resolves the interval.
 function runScreen(change) {
   return new Promise((resolve, fail) => {
+    animBuffer = null;
+    
     // Unified rsolve handler for confirming state.
     function done(intervalID) {
       updateStateFromChange(change);
