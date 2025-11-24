@@ -409,13 +409,9 @@ function clearScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// Apply text overlay to current pixel buffer
-let scrollX = width;
-function applyTextOverlay() {
-  if (!textState.enabled || !textState.text) return;
-  
-  // Apply background fade
-  if (textState.bgAlpha > 0) {
+// Apply background fade
+function applyBackgroundFade() {
+  if (textState.enabled && textState.bgAlpha > 0) {
     const bgRGB = hexToRGB(textState.bgColor);
     for (let i = 0; i < width * height; i++) {
       const pos = i * 4;
@@ -424,8 +420,13 @@ function applyTextOverlay() {
       ctx.pixels[pos + 2] = bgRGB.b * textState.bgAlpha + ctx.pixels[pos + 2] * (1 - textState.bgAlpha);
     }
   }
+}
+
+// Apply text overlay to current pixel buffer
+let scrollX = width;
+function applyTextOverlay() {
+  if (!textState.enabled || !textState.text) return;
   
-  // Draw text
   ctx.fillStyle = textState.color;
   ctx.font = textState.font;
   
@@ -681,6 +682,7 @@ function renderFrame() {
   }
   lastFrameTime = now;
   
+  applyBackgroundFade();
   applyTextOverlay();
   updatePixelData();
   checkSetStateFromSchedule();
