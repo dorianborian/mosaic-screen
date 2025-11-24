@@ -9,14 +9,16 @@ const fonts = {
 };
 
 class SimpleCanvas {
-  constructor(width, height) {
+  constructor(width, height, transparent = false) {
     this.width = width;
     this.height = height;
     this.pixels = new Uint8ClampedArray(width * height * 4);
     this.fillStyle = '#000000';
     this.font = '8px Arial';
-    for (let i = 3; i < this.pixels.length; i += 4) {
-      this.pixels[i] = 255;
+    if (!transparent) {
+      for (let i = 3; i < this.pixels.length; i += 4) {
+        this.pixels[i] = 255;
+      }
     }
   }
 
@@ -77,12 +79,14 @@ class SimpleCanvas {
           for (let px = 0; px < charWidth; px++) {
             const drawX = x + offsetX + px;
             const drawY = y + py;
-            if (pattern[py] && pattern[py][px] && drawX >= 0 && drawX < this.width && drawY >= 0 && drawY < this.height) {
-              const i = (drawY * this.width + drawX) * 4;
-              this.pixels[i] = color.r;
-              this.pixels[i + 1] = color.g;
-              this.pixels[i + 2] = color.b;
-              this.pixels[i + 3] = 255;
+            if (drawX >= 0 && drawX < this.width && drawY >= 0 && drawY < this.height) {
+              if (pattern[py] && pattern[py][px]) {
+                const i = (drawY * this.width + drawX) * 4;
+                this.pixels[i] = color.r;
+                this.pixels[i + 1] = color.g;
+                this.pixels[i + 2] = color.b;
+                this.pixels[i + 3] = 255;
+              }
             }
           }
         }
@@ -141,7 +145,18 @@ class SimpleCanvas {
       const pixel = [this.pixels[i], this.pixels[i+1], this.pixels[i+2], this.pixels[i+3]];
       return { data: pixel };
     }
-    return { data: this.pixels };
+    const data = new Uint8ClampedArray(w * h * 4);
+    for (let py = 0; py < h; py++) {
+      for (let px = 0; px < w; px++) {
+        const srcIdx = ((y + py) * this.width + (x + px)) * 4;
+        const dstIdx = (py * w + px) * 4;
+        data[dstIdx] = this.pixels[srcIdx];
+        data[dstIdx + 1] = this.pixels[srcIdx + 1];
+        data[dstIdx + 2] = this.pixels[srcIdx + 2];
+        data[dstIdx + 3] = this.pixels[srcIdx + 3];
+      }
+    }
+    return { data, width: w, height: h };
   }
 
   putImageData(imageData, x, y) {
