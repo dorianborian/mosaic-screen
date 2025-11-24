@@ -443,15 +443,18 @@ function applyTextOverlay() {
   }
   
   const fgRGB = hexToRGB(textState.color);
+  let textPixelCount = 0;
   for (let i = 0; i < width * height; i++) {
     const pos = i * 4;
     const isText = tempCanvas.pixels[pos + 3] > 0;
+    if (isText) textPixelCount++;
     if (textState.invert ? !isText : isText) {
       ctx.pixels[pos] = fgRGB.r;
       ctx.pixels[pos + 1] = fgRGB.g;
       ctx.pixels[pos + 2] = fgRGB.b;
     }
   }
+  if (Math.random() < 0.01) console.log('Text pixels:', textPixelCount, '/', width * height);
 }
 
 
