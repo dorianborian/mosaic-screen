@@ -449,6 +449,7 @@ function applyTextOverlay() {
 }
 
 // Animate a horizontal sprite sheet image over 15px square.
+let animBuffer = null;
 function animImage(name) {
   if (!appData.images[name]) {
     name = "fire";
@@ -459,12 +460,14 @@ function animImage(name) {
     loadImage(`${animPath}/${name}_${fps}.gif`).then((image) => {
       const frames = Math.floor(image.width / width);
       let frame = 0;
+      const tempCanvas = createCanvas(width, height);
+      const tempCtx = tempCanvas.getContext('2d');
+      animBuffer = tempCanvas.pixels;
       
       const interval = setInterval(() => {
         if (frame >= frames) frame = 0;
         if (image.data && image.data.length > 0) {
-          ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
-          if (Math.random() < 0.01) console.log('Anim drew frame', frame, 'pixel[0]:', ctx.pixels[0]);
+          tempCtx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
         }
         frame++;
       }, Math.round(1000 / fps));
@@ -683,6 +686,10 @@ function renderFrame() {
     return;
   }
   lastFrameTime = now;
+  
+  if (animBuffer) {
+    ctx.pixels.set(animBuffer);
+  }
   
   if (Math.random() < 0.01) console.log('RenderFrame: pixel[0] before fade:', ctx.pixels[0]);
   applyBackgroundFade();
