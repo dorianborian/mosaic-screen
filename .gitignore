@@ -60,5 +60,6 @@ typings/
 # next.js build output
 .next
 
-# Schedule files
+# Schedule and state files
 schedule.json
+state.json

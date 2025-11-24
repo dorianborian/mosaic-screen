@@ -109,6 +109,34 @@
 
 <div class="box">
   <label class="label">
+    <span>Text Overlay (Global):</span>
+  </label>
+  <div class="field" id="text-overlay">
+    <label><input type="checkbox" id="text-enabled"> Enable</label>
+    <input type="text" id="text-content" placeholder="Text">
+    <select id="text-font">
+      <option value="">Small</option>
+      <option value="medium" selected>Medium</option>
+      <option value="big">Big</option>
+    </select>
+    <input type="color" id="text-color" value="#ffffff">
+    <br>
+    <label>X:</label>
+    <input type="number" id="text-x" value="0" step="1">
+    <label>Y:</label>
+    <input type="number" id="text-y" value="0" step="1">
+    <br>
+    <label><input type="checkbox" id="text-invert"> Invert</label>
+    <label>BG Brightness:</label>
+    <input type="range" id="text-bg-brightness" min="0" max="1" step="0.1" value="1">
+    <span id="text-bg-val">1.0</span>
+    <br>
+    <button class="button is-primary" id="text-apply">Apply</button>
+  </div>
+</div>
+
+<div class="box">
+  <label class="label">
     <span>Plasma:</span>
   </label>
   <div class="field" id="plasma">
@@ -122,14 +150,6 @@
     <label>Plasma Brightness:</label>
     <input type="range" id="plasma-brightness" min="0.1" max="1" step="0.1" value="1">
     <span id="plasma-brightness-val">1.0</span>
-    <br>
-    <label><input type="checkbox" id="plasma-clock"> Show Clock</label>
-    <label><input type="checkbox" id="plasma-invert"> Invert (plasma on text)</label>
-    <br>
-    <label>Clock Color:</label>
-    <input type="color" id="plasma-clock-color" value="#ffffff">
-    <label>BG Color:</label>
-    <input type="color" id="plasma-bg-color" value="#000000">
     <br>
     <button class="button is-primary" id="plasma-apply">Apply Plasma</button>
   </div>
@@ -175,6 +195,11 @@
 
   document.getElementById('clock-color').addEventListener('change', (e) => {
     post('clock', { color: e.target.value });
+    fetch('text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: false })
+    });
   });
 
   document.getElementById('ball-color').addEventListener('change', (e) => {
@@ -274,6 +299,28 @@
     });
   });
 
+  // Text overlay controls
+  document.getElementById('text-bg-brightness').addEventListener('input', (e) => {
+    document.getElementById('text-bg-val').textContent = e.target.value;
+  });
+
+  document.getElementById('text-apply').addEventListener('click', () => {
+    fetch('text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        enabled: document.getElementById('text-enabled').checked,
+        text: document.getElementById('text-content').value,
+        font: document.getElementById('text-font').value,
+        color: document.getElementById('text-color').value,
+        x: parseInt(document.getElementById('text-x').value),
+        y: parseInt(document.getElementById('text-y').value),
+        invert: document.getElementById('text-invert').checked,
+        bgBrightness: parseFloat(document.getElementById('text-bg-brightness').value)
+      })
+    });
+  });
+
   // Plasma controls
   document.getElementById('plasma-brightness').addEventListener('input', (e) => {
     document.getElementById('plasma-brightness-val').textContent = e.target.value;
@@ -281,10 +328,6 @@
 
   document.getElementById('plasma-apply').addEventListener('click', () => {
     const opts = {
-      withClock: document.getElementById('plasma-clock').checked,
-      invert: document.getElementById('plasma-invert').checked,
-      clockColor: document.getElementById('plasma-clock-color').value,
-      bgColor: document.getElementById('plasma-bg-color').value,
       plasmaBrightness: parseFloat(document.getElementById('plasma-brightness').value)
     };
     

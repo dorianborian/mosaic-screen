@@ -69,11 +69,23 @@ const canvas = createCanvas(width, height);
 const ctx = canvas.getContext('2d');
 
 // Manage state.
-// Initial values here represent default startup state.
-const globalState = {
+const stateFile = './state.json';
+let globalState = {
   brightness: 10,
   mode: 'ball',
   options: 'red',
+};
+
+// Global text overlay state
+let textState = {
+  enabled: false,
+  text: '',
+  font: 'medium',
+  color: '#ffffff',
+  x: 0,
+  y: 0,
+  invert: false,
+  bgBrightness: 1.0
 };
 
 // Object of schedule items keyed by time.
@@ -130,12 +142,32 @@ function updateStateFromChange(change) {
   if (key) {
     globalState.mode = key;
     globalState.options = change[key];
+    writeState();
   }
 }
 
 // Set Brightness State helper
 function updateStateBrightness(level) {
   globalState.brightness = level;
+  writeState();
+}
+
+// Load state from file
+function readState() {
+  if (fs.existsSync(stateFile)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(stateFile));
+      if (data.globalState) globalState = data.globalState;
+      if (data.textState) textState = data.textState;
+    } catch (error) {
+      console.error('Problem loading state file:', error);
+    }
+  }
+}
+
+// Save state to file
+function writeState() {
+  fs.writeFileSync(stateFile, JSON.stringify({ globalState, textState }, null, 2));
 }
 
 // Setup the schedule global array from the JSON file.
@@ -277,15 +309,25 @@ function drawClock(color) {
 
 // Clock mode!
 function changeClock({ color = "red" }) {
-  let counter = 0;
-
-  // Dont Repeat Yourself
+  textState.enabled = true;
+  textState.font = 'medium';
+  textState.color = color;
+  textState.x = 2;
+  textState.y = 1;
+  
   function clockLoop() {
     clearScreen();
-    drawClock(color);
+    const time = new Date();
+    const minutes = time.getMinutes().toString().padStart(2, '0');
+    let hours = time.getHours();
+    let isPM = hours >= 12;
+    if (hours > 12) hours = hours - 12;
+    if (hours === 0) hours = 12;
+    const hoursStr = hours.toString().padStart(2, '0');
+    const minutesStr = minutes + (isPM ? '.' : ' ');
+    textState.text = hoursStr + '\n' + minutesStr;
   }
   clockLoop();
-
   return setInterval(clockLoop, 1000);
 }
 
@@ -325,15 +367,19 @@ function rotateModes(seconds) {
 }
 
 function scrollText({ color = "blue", text, size = "small", speed = 2 }) {
-  ctx.fillStyle = color;
-  ctx.font = size === "big" ? "big" : size === "medium" ? "medium" : "";
   const textSize = ctx.measureText(text);
   const y = Math.floor((height - (size === "big" ? 13 : size === "medium" ? 6 : 5)) / 2);
   let x = width;
   
+  textState.enabled = true;
+  textState.text = text;
+  textState.font = size === "big" ? "big" : size === "medium" ? "medium" : "";
+  textState.color = color;
+  textState.y = y;
+  
   return setInterval(() => {
     clearScreen();
-    ctx.fillText(text, Math.floor(x), y);
+    textState.x = Math.floor(x);
     x -= speed / 10;
     if (x < -textSize.width) x = width;
   }, Math.round(1000 / 30));
@@ -377,6 +423,41 @@ function ballBounce(color) {
 // Clear the screen.
 function clearScreen() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// Apply text overlay to current pixel buffer
+function applyTextOverlay() {
+  if (!textState.enabled || !textState.text) return;
+  
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  // Save current pixels
+  const bgPixels = new Uint8ClampedArray(ctx.pixels);
+  
+  // Draw text to get mask
+  clearScreen();
+  ctx.fillStyle = 'white';
+  ctx.font = textState.font;
+  ctx.fillText(textState.text, textState.x, textState.y);
+  const mask = ctx.getImageData(0, 0, w, h);
+  
+  // Apply mask with brightness adjustment
+  const textRGB = hexToRGB(textState.color);
+  for (let i = 0; i < w * h; i++) {
+    const pos = i * 4;
+    const isText = mask.data[pos + 3] > 0;
+    
+    if (textState.invert ? !isText : isText) {
+      ctx.pixels[pos] = textRGB.r;
+      ctx.pixels[pos + 1] = textRGB.g;
+      ctx.pixels[pos + 2] = textRGB.b;
+    } else {
+      ctx.pixels[pos] = bgPixels[pos] * textState.bgBrightness;
+      ctx.pixels[pos + 1] = bgPixels[pos + 1] * textState.bgBrightness;
+      ctx.pixels[pos + 2] = bgPixels[pos + 2] * textState.bgBrightness;
+    }
+  }
 }
 
 // Animate a horizontal sprite sheet image over 15px square.
@@ -460,10 +541,6 @@ function plasma({
   modA = Math.random() * 64, 
   modB = Math.random() * 64, 
   modC = Math.random() * 64,
-  withClock = false, 
-  invert = false,
-  clockColor = '#ffffff',
-  bgColor = '#000000',
   plasmaBrightness = 1.0
 }) {
   var w = canvas.width;
@@ -486,11 +563,8 @@ function plasma({
 
   var plasma = buffer;
   var hueShift = 0;
-  const bgRGB = hexToRGB(bgColor);
-  const clockRGB = hexToRGB(clockColor);
 
   return setInterval(() => {
-    // Generate plasma into buffer
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
         var hue = hueShift + (plasma[y][x] % 1);
@@ -502,40 +576,6 @@ function plasma({
         ctx.pixels[pos + 3] = 255;
       }
     }
-    
-    if (withClock) {
-      const time = new Date();
-      const minutes = time.getMinutes().toString().padStart(2, '0');
-      let hours = time.getHours();
-      let isPM = hours >= 12;
-      if (hours > 12) hours = hours - 12;
-      if (hours === 0) hours = 12;
-      const hoursStr = hours.toString().padStart(2, '0');
-      const minutesStr = minutes + (isPM ? '.' : ' ');
-      
-      // Draw text to temp canvas to get mask
-      clearScreen();
-      ctx.fillStyle = 'white';
-      ctx.font = 'medium';
-      ctx.fillText(hoursStr, 2, 1);
-      ctx.fillText(minutesStr, 2, 8);
-      const mask = ctx.getImageData(0, 0, w, h);
-      
-      // Apply mask
-      for (var y = 0; y < h; y++) {
-        for (var x = 0; x < w; x++) {
-          var pos = (y * w + x) * 4;
-          var isText = mask.data[pos + 3] > 0;
-          
-          if (invert ? !isText : isText) {
-            ctx.pixels[pos] = clockRGB.r;
-            ctx.pixels[pos + 1] = clockRGB.g;
-            ctx.pixels[pos + 2] = clockRGB.b;
-          }
-        }
-      }
-    }
-
     hueShift = (hueShift + 0.01) % 1;
   }, Math.round(1000 / 60));
 }
@@ -656,6 +696,7 @@ function renderTerminal() {
 
 // Update pixels and render to GPIO.
 function renderFrame() {
+  applyTextOverlay();
   updatePixelData();
   checkSetStateFromSchedule();
   
@@ -703,7 +744,8 @@ try {
   console.log('GPIO initialization skipped - dev mode');
 }
 
-// Read the schedule.
+// Read state and schedule.
+readState();
 readSchedule();
 
 // Setup the state from Global.
@@ -755,6 +797,18 @@ app.get("/data", (req, res) => {
 app.post("/data", (req, res) => {
   const change = changeScreen(req.body);
   res.send({ status: "ok" });
+});
+
+// Set text overlay.
+app.post("/text", (req, res) => {
+  Object.assign(textState, req.body);
+  writeState();
+  res.send({ status: "ok" });
+});
+
+// Get text overlay state.
+app.get("/text", (req, res) => {
+  res.json(textState);
 });
 
 // Set brightness.
