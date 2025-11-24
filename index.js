@@ -413,15 +413,12 @@ function clearScreen() {
 function applyBackgroundFade() {
   if (textState.enabled && textState.bgAlpha > 0) {
     const bgRGB = hexToRGB(textState.bgColor);
-    let sampleBefore = ctx.pixels[0];
     for (let i = 0; i < width * height; i++) {
       const pos = i * 4;
       ctx.pixels[pos] = bgRGB.r * textState.bgAlpha + ctx.pixels[pos] * (1 - textState.bgAlpha);
       ctx.pixels[pos + 1] = bgRGB.g * textState.bgAlpha + ctx.pixels[pos + 1] * (1 - textState.bgAlpha);
       ctx.pixels[pos + 2] = bgRGB.b * textState.bgAlpha + ctx.pixels[pos + 2] * (1 - textState.bgAlpha);
     }
-    let sampleAfter = ctx.pixels[0];
-    if (Math.random() < 0.01) console.log('BG fade:', sampleBefore, '->', sampleAfter);
   }
 }
 
@@ -691,7 +688,6 @@ function renderFrame() {
     ctx.pixels.set(animBuffer);
   }
   
-  if (Math.random() < 0.01) console.log('RenderFrame: pixel[0] before fade:', ctx.pixels[0]);
   applyBackgroundFade();
   applyTextOverlay();
   updatePixelData();
