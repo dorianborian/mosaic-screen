@@ -13,7 +13,8 @@ class TextOverlay extends LitElement {
     speed: { type: Number },
     bgColor: { type: String },
     bgAlpha: { type: Number },
-    useClock: { type: Boolean }
+    useClock: { type: Boolean },
+    invert: { type: Boolean }
   };
 
   constructor() {
@@ -21,12 +22,13 @@ class TextOverlay extends LitElement {
     this.enabled = false;
     this.text = '';
     this.font = 'medium';
-    this.color = '#ffffff';
+    this.color = '#000000';
     this.scroll = false;
     this.speed = 2;
     this.bgColor = '#000000';
-    this.bgAlpha = 0.2;
+    this.bgAlpha = 0.8;
     this.useClock = false;
+    this.invert = false;
   }
 
   render() {
@@ -41,7 +43,8 @@ class TextOverlay extends LitElement {
           <option value="medium">Medium</option>
           <option value="big">Big</option>
         </select>
-        <label>Text Color: <input type="color" .value=${this.color} @input=${e => this.color = e.target.value}></label>
+        <label>Foreground Color: <input type="color" .value=${this.color} @input=${e => this.color = e.target.value}></label>
+        <label><input type="checkbox" ?checked=${this.invert} @change=${e => this.invert = e.target.checked}> Invert Text</label>
         <label><input type="checkbox" ?checked=${this.scroll} @change=${e => this.scroll = e.target.checked} ?disabled=${this.useClock}> Scroll</label>
         <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @input=${e => this.speed = parseInt(e.target.value)} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
         <label>BG Color: <input type="color" .value=${this.bgColor} @input=${e => this.bgColor = e.target.value}></label>
@@ -64,7 +67,8 @@ class TextOverlay extends LitElement {
         speed: this.speed,
         bgColor: this.bgColor,
         bgAlpha: this.bgAlpha,
-        useClock: this.useClock
+        useClock: this.useClock,
+        invert: this.invert
       })
     });
   }

@@ -81,12 +81,13 @@ let textState = {
   enabled: false,
   text: '',
   font: 'medium',
-  color: '#ffffff',
+  color: '#000000',
   scroll: false,
   speed: 2,
   bgColor: '#000000',
-  bgAlpha: 0.2,
+  bgAlpha: 0.8,
   useClock: false,
+  invert: false,
   x: 0
 };
 
@@ -421,22 +422,60 @@ function applyTextOverlay() {
   
   if (!displayText) return;
   
-  ctx.fillStyle = textState.color;
-  ctx.font = textState.font;
-  
-  if (textState.scroll && !textState.useClock) {
-    const textSize = ctx.measureText(displayText);
-    const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
-    ctx.fillText(displayText, Math.floor(scrollX), y);
-    scrollX -= textState.speed / 10;
-    if (scrollX < -textSize.width) scrollX = width;
+  if (textState.invert) {
+    const bgPixels = new Uint8ClampedArray(ctx.pixels);
+    const tempCanvas = createCanvas(width, height, true);
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.fillStyle = 'white';
+    tempCtx.font = textState.font;
+    
+    if (textState.scroll && !textState.useClock) {
+      const textSize = tempCtx.measureText(displayText);
+      const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
+      tempCtx.fillText(displayText, Math.floor(scrollX), y);
+      scrollX -= textState.speed / 10;
+      if (scrollX < -textSize.width) scrollX = width;
+    } else {
+      const lines = displayText.split('\n');
+      const yOffset = textState.useClock ? 1 : 0;
+      lines.forEach((line, i) => {
+        const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
+        tempCtx.fillText(line, textState.x, yOffset + i * lineHeight);
+      });
+    }
+    
+    const fgRGB = hexToRGB(textState.color);
+    for (let i = 0; i < width * height; i++) {
+      const pos = i * 4;
+      const isText = tempCanvas.pixels[pos + 3] > 0;
+      if (isText) {
+        ctx.pixels[pos] = bgPixels[pos];
+        ctx.pixels[pos + 1] = bgPixels[pos + 1];
+        ctx.pixels[pos + 2] = bgPixels[pos + 2];
+      } else {
+        ctx.pixels[pos] = fgRGB.r;
+        ctx.pixels[pos + 1] = fgRGB.g;
+        ctx.pixels[pos + 2] = fgRGB.b;
+      }
+    }
   } else {
-    const lines = displayText.split('\n');
-    const yOffset = textState.useClock ? 1 : 0;
-    lines.forEach((line, i) => {
-      const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
-      ctx.fillText(line, textState.x, yOffset + i * lineHeight);
-    });
+    ctx.fillStyle = textState.color;
+    ctx.font = textState.font;
+    
+    if (textState.scroll && !textState.useClock) {
+      const textSize = ctx.measureText(displayText);
+      const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
+      ctx.fillText(displayText, Math.floor(scrollX), y);
+      scrollX -= textState.speed / 10;
+      if (scrollX < -textSize.width) scrollX = width;
+    } else {
+      const lines = displayText.split('\n');
+      const yOffset = textState.useClock ? 1 : 0;
+      lines.forEach((line, i) => {
+        const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
+        ctx.fillText(line, textState.x, yOffset + i * lineHeight);
+      });
+    }
   }
 }
 
