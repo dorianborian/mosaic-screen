@@ -4,7 +4,7 @@ import './components/text-overlay.js';
 import './components/plasma-controls.js';
 import './components/animations.js';
 import './components/clock-controls.js';
-import './components/scroll-controls.js';
+
 import './components/ball-controls.js';
 import './components/color-controls.js';
 import './components/power-controls.js';
@@ -16,7 +16,7 @@ const appTemplate = html`
   <plasma-controls></plasma-controls>
   <animations-list></animations-list>
   <clock-controls></clock-controls>
-  <scroll-controls></scroll-controls>
+
   <ball-controls></ball-controls>
   <color-controls></color-controls>
   <power-controls></power-controls>

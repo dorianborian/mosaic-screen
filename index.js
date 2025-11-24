@@ -82,10 +82,11 @@ let textState = {
   text: '',
   font: 'medium',
   color: '#ffffff',
-  alpha: 1.0,
-  x: 0,
-  y: 0,
-  invert: false
+  scroll: false,
+  speed: 2,
+  bgColor: '#000000',
+  bgAlpha: 0.2,
+  x: 0
 };
 
 // Object of schedule items keyed by time.
@@ -247,9 +248,7 @@ function runScreen(change) {
     } else if (change.ball) {
       // Bounce the ball
       done(ballBounce(change.ball));
-    } else if (change.scroll) {
-      // Scroll text!
-      done(scrollText(change.scroll));
+
     } else if (change.color) {
       // Solid color!
       done(changeColor(change.color));
@@ -366,24 +365,7 @@ function rotateModes(seconds) {
   return setInterval(pickNext, seconds * 1000);
 }
 
-function scrollText({ color = "blue", text, size = "small", speed = 2 }) {
-  const textSize = ctx.measureText(text);
-  const y = Math.floor((height - (size === "big" ? 13 : size === "medium" ? 6 : 5)) / 2);
-  let x = width;
-  
-  textState.enabled = true;
-  textState.text = text;
-  textState.font = size === "big" ? "big" : size === "medium" ? "medium" : "";
-  textState.color = color;
-  textState.y = y;
-  
-  return setInterval(() => {
-    clearScreen();
-    textState.x = Math.floor(x);
-    x -= speed / 10;
-    if (x < -textSize.width) x = width;
-  }, Math.round(1000 / 30));
-}
+
 
 // Bounce a ball around the screen.
 let ballPosition = { x: 7, y: 7 }; // Global for debugging
@@ -426,17 +408,38 @@ function clearScreen() {
 }
 
 // Apply text overlay to current pixel buffer
+let scrollX = width;
 function applyTextOverlay() {
   if (!textState.enabled || !textState.text) return;
   
+  // Apply background fade
+  if (textState.bgAlpha > 0) {
+    const bgRGB = hexToRGB(textState.bgColor);
+    for (let i = 0; i < width * height; i++) {
+      const pos = i * 4;
+      ctx.pixels[pos] = bgRGB.r * textState.bgAlpha + ctx.pixels[pos] * (1 - textState.bgAlpha);
+      ctx.pixels[pos + 1] = bgRGB.g * textState.bgAlpha + ctx.pixels[pos + 1] * (1 - textState.bgAlpha);
+      ctx.pixels[pos + 2] = bgRGB.b * textState.bgAlpha + ctx.pixels[pos + 2] * (1 - textState.bgAlpha);
+    }
+  }
+  
+  // Draw text
   ctx.fillStyle = textState.color;
   ctx.font = textState.font;
   
-  const lines = textState.text.split('\n');
-  lines.forEach((line, i) => {
-    const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
-    ctx.fillText(line, textState.x, textState.y + (i * lineHeight));
-  });
+  if (textState.scroll) {
+    const textSize = ctx.measureText(textState.text);
+    const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
+    ctx.fillText(textState.text, Math.floor(scrollX), y);
+    scrollX -= textState.speed / 10;
+    if (scrollX < -textSize.width) scrollX = width;
+  } else {
+    const lines = textState.text.split('\n');
+    lines.forEach((line, i) => {
+      const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
+      ctx.fillText(line, textState.x, i * lineHeight);
+    });
+  }
 }
 
 // Animate a horizontal sprite sheet image over 15px square.
@@ -674,7 +677,15 @@ function renderTerminal() {
 }
 
 // Update pixels and render to GPIO.
+let lastFrameTime = Date.now();
 function renderFrame() {
+  const now = Date.now();
+  if (textState.scroll && now - lastFrameTime < 33) {
+    setTimeout(renderFrame, FRAME_RATE_TIME);
+    return;
+  }
+  lastFrameTime = now;
+  
   applyTextOverlay();
   updatePixelData();
   checkSetStateFromSchedule();
