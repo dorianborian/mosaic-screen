@@ -82,10 +82,10 @@ let textState = {
   text: '',
   font: 'medium',
   color: '#ffffff',
+  alpha: 1.0,
   x: 0,
   y: 0,
-  invert: false,
-  bgBrightness: 1.0
+  invert: false
 };
 
 // Object of schedule items keyed by time.
@@ -432,30 +432,46 @@ function applyTextOverlay() {
   const w = canvas.width;
   const h = canvas.height;
   
-  // Save current pixels
+  // Save current background pixels
   const bgPixels = new Uint8ClampedArray(ctx.pixels);
   
-  // Draw text to get mask
-  clearScreen();
-  ctx.fillStyle = 'white';
-  ctx.font = textState.font;
-  ctx.fillText(textState.text, textState.x, textState.y);
-  const mask = ctx.getImageData(0, 0, w, h);
+  // Draw text to temp canvas to get mask
+  const tempCanvas = createCanvas(w, h);
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.fillStyle = 'white';
+  tempCtx.font = textState.font;
+  tempCtx.fillText(textState.text, textState.x, textState.y);
+  const mask = tempCtx.getImageData(0, 0, w, h);
   
-  // Apply mask with brightness adjustment
   const textRGB = hexToRGB(textState.color);
+  const alpha = textState.alpha;
+  
   for (let i = 0; i < w * h; i++) {
     const pos = i * 4;
     const isText = mask.data[pos + 3] > 0;
     
-    if (textState.invert ? !isText : isText) {
-      ctx.pixels[pos] = textRGB.r;
-      ctx.pixels[pos + 1] = textRGB.g;
-      ctx.pixels[pos + 2] = textRGB.b;
+    if (textState.invert) {
+      // Inverted: text shows background animation, non-text shows alpha-blended foreground color over background
+      if (isText) {
+        ctx.pixels[pos] = bgPixels[pos];
+        ctx.pixels[pos + 1] = bgPixels[pos + 1];
+        ctx.pixels[pos + 2] = bgPixels[pos + 2];
+      } else {
+        ctx.pixels[pos] = textRGB.r * alpha + bgPixels[pos] * (1 - alpha);
+        ctx.pixels[pos + 1] = textRGB.g * alpha + bgPixels[pos + 1] * (1 - alpha);
+        ctx.pixels[pos + 2] = textRGB.b * alpha + bgPixels[pos + 2] * (1 - alpha);
+      }
     } else {
-      ctx.pixels[pos] = bgPixels[pos] * textState.bgBrightness;
-      ctx.pixels[pos + 1] = bgPixels[pos + 1] * textState.bgBrightness;
-      ctx.pixels[pos + 2] = bgPixels[pos + 2] * textState.bgBrightness;
+      // Normal: text shows alpha-blended foreground color over background, non-text shows background
+      if (isText) {
+        ctx.pixels[pos] = textRGB.r * alpha + bgPixels[pos] * (1 - alpha);
+        ctx.pixels[pos + 1] = textRGB.g * alpha + bgPixels[pos + 1] * (1 - alpha);
+        ctx.pixels[pos + 2] = textRGB.b * alpha + bgPixels[pos + 2] * (1 - alpha);
+      } else {
+        ctx.pixels[pos] = bgPixels[pos];
+        ctx.pixels[pos + 1] = bgPixels[pos + 1];
+        ctx.pixels[pos + 2] = bgPixels[pos + 2];
+      }
     }
   }
 }
