@@ -432,9 +432,10 @@ function applyTextOverlay() {
     if (scrollX < -textSize.width) scrollX = width;
   } else {
     const lines = displayText.split('\n');
+    const yOffset = textState.useClock ? 1 : 0;
     lines.forEach((line, i) => {
       const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
-      ctx.fillText(line, textState.x, i * lineHeight);
+      ctx.fillText(line, textState.x, yOffset + i * lineHeight);
     });
   }
 }
