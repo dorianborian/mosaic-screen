@@ -457,19 +457,10 @@ function animImage(name) {
       let frame = 0;
       
       const interval = setInterval(() => {
-        if (frame >= frames) {
-          frame = 0;
-        }
-
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (frame >= frames) frame = 0;
         
         if (image.data && image.data.length > 0) {
           ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
-        } else {
-          // Fallback: draw colored square
-          ctx.fillStyle = frame % 2 ? '#ff0000' : '#00ff00';
-          ctx.fillRect(5, 5, 5, 5);
         }
         
         frame++;
