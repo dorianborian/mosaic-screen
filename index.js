@@ -315,7 +315,8 @@ function changeClock({ color = "red" }) {
   textState.y = 1;
   
   function clockLoop() {
-    clearScreen();
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     const time = new Date();
     const minutes = time.getMinutes().toString().padStart(2, '0');
     let hours = time.getHours();
@@ -382,7 +383,8 @@ function ballBounce(color) {
   var moveY = Math.sin((Math.PI / 180) * corner) * velo;
 
   function DrawMe() {
-    clearScreen();
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (ball.x > canvas.width - rad || ball.x < rad) moveX = -moveX;
     if (ball.y > canvas.height - rad || ball.y < rad) moveY = -moveY;
@@ -484,7 +486,8 @@ function hostPower(option) {
   const cmd = option === "shutdown" ? "/sbin/shutdown -h now" : "/sbin/reboot";
 
   return setInterval(() => {
-    clearScreen();
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (countdown > 5) {
       if (countdown % 2) {
         ctx.fillStyle = "red";
@@ -501,7 +504,8 @@ function hostPower(option) {
       ctx.fillText(countdown, 3, 13);
     } else if (countdown === -1) {
       // Clear the screen, wait one sec...
-      clearScreen();
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else if (countdown === -2) {
       // Actually run the command.
       exec(cmd);
