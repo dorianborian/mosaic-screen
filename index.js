@@ -530,14 +530,17 @@ function changeColor(color) {
 }
 
 // Run the random plasma animation at 60fps.
-let currentPlasmaParams = { modA: 0, modB: 0, modC: 0, plasmaBrightness: 1.0 };
+let currentPlasmaParams = { modA: 32, modB: 32, modC: 32 };
+let plasmaInterval = null;
 function plasma({ 
   modA = Math.random() * 64, 
   modB = Math.random() * 64, 
   modC = Math.random() * 64,
   plasmaBrightness = 1.0
 }) {
-  currentPlasmaParams = { modA, modB, modC, plasmaBrightness };
+  currentPlasmaParams.modA = modA;
+  currentPlasmaParams.modB = modB;
+  currentPlasmaParams.modC = modC;
   var w = canvas.width;
   var h = canvas.height;
   var buffer = new Array(h);
@@ -559,11 +562,19 @@ function plasma({
   var plasma = buffer;
   var hueShift = 0;
 
-  return setInterval(() => {
+  clearInterval(plasmaInterval);
+  plasmaInterval = setInterval(() => {
+    const mod = [currentPlasmaParams.modA, currentPlasmaParams.modB, currentPlasmaParams.modC];
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
-        var hue = hueShift + (plasma[y][x] % 1);
-        var rgb = HSVtoRGB(hue, plasma[y][x], plasma[y][x] * plasmaBrightness);
+        var value = Math.sin(x / 16.0 / mod[0]);
+        value += Math.sin(y / 8.0 / mod[1]);
+        value += Math.sin((x + y) / 16.0 / mod[0]);
+        value += Math.sin(Math.sqrt(x * x + y * y) / 8.0 / mod[1]);
+        value += 4 / mod[2];
+        value /= 8 / mod[2];
+        var hue = hueShift + (value % 1);
+        var rgb = HSVtoRGB(hue, value, value * plasmaBrightness);
         var pos = (y * w + x) * 4;
         ctx.pixels[pos] = rgb.r;
         ctx.pixels[pos + 1] = rgb.g;
@@ -573,6 +584,7 @@ function plasma({
     }
     hueShift = (hueShift + 0.01) % 1;
   }, Math.round(1000 / 60));
+  return plasmaInterval;
 }
 
 function hexToRGB(hex) {
@@ -793,15 +805,16 @@ process.on('SIGTERM', () => {
 // =============================================================================
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-      if (data.type === 'plasma-update') {
-        changeScreen({ plasma: data.params });
-      } else if (data.type === 'get-plasma') {
-        ws.send(JSON.stringify({ type: 'plasma-state', params: currentPlasmaParams }));
+    const str = message.toString();
+    if (str === 'get') {
+      ws.send(JSON.stringify({ type: 'plasma-state', params: currentPlasmaParams }));
+    } else {
+      const [a, b, c] = str.split(',').map(parseFloat);
+      if (!isNaN(a) && !isNaN(b) && !isNaN(c)) {
+        currentPlasmaParams.modA = a;
+        currentPlasmaParams.modB = b;
+        currentPlasmaParams.modC = c;
       }
-    } catch (err) {
-      console.error('WebSocket message error:', err);
     }
   });
 });

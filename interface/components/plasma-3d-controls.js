@@ -35,7 +35,7 @@ class Plasma3DControls extends LitElement {
     this.ws = new WebSocket(`${protocol}//${window.location.host}`);
     
     this.ws.onopen = () => {
-      this.ws.send(JSON.stringify({ type: 'get-plasma' }));
+      this.ws.send('get');
     };
     
     this.ws.onmessage = (event) => {
@@ -126,10 +126,10 @@ class Plasma3DControls extends LitElement {
     this.modC = Math.max(0.1, Math.min(64, (Math.abs(this.rotation.x) + Math.abs(this.rotation.y)) / 2 * 10));
     
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        type: 'plasma-update',
-        params: { modA: this.modA, modB: this.modB, modC: this.modC, plasmaBrightness: 1.0 }
-      }));
+      const a = this.modA.toFixed(1);
+      const b = this.modB.toFixed(1);
+      const c = this.modC.toFixed(1);
+      this.ws.send(`${a},${b},${c}`);
     }
     this.requestUpdate();
   }
