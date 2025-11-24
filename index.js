@@ -413,12 +413,15 @@ function clearScreen() {
 function applyBackgroundFade() {
   if (textState.enabled && textState.bgAlpha > 0) {
     const bgRGB = hexToRGB(textState.bgColor);
+    let sampleBefore = ctx.pixels[0];
     for (let i = 0; i < width * height; i++) {
       const pos = i * 4;
       ctx.pixels[pos] = bgRGB.r * textState.bgAlpha + ctx.pixels[pos] * (1 - textState.bgAlpha);
       ctx.pixels[pos + 1] = bgRGB.g * textState.bgAlpha + ctx.pixels[pos + 1] * (1 - textState.bgAlpha);
       ctx.pixels[pos + 2] = bgRGB.b * textState.bgAlpha + ctx.pixels[pos + 2] * (1 - textState.bgAlpha);
     }
+    let sampleAfter = ctx.pixels[0];
+    if (Math.random() < 0.01) console.log('BG fade:', sampleBefore, '->', sampleAfter);
   }
 }
 
@@ -461,6 +464,7 @@ function animImage(name) {
         if (frame >= frames) frame = 0;
         if (image.data && image.data.length > 0) {
           ctx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
+          if (Math.random() < 0.01) console.log('Anim drew frame', frame, 'pixel[0]:', ctx.pixels[0]);
         }
         frame++;
       }, Math.round(1000 / fps));
@@ -680,6 +684,7 @@ function renderFrame() {
   }
   lastFrameTime = now;
   
+  if (Math.random() < 0.01) console.log('RenderFrame: pixel[0] before fade:', ctx.pixels[0]);
   applyBackgroundFade();
   applyTextOverlay();
   updatePixelData();
