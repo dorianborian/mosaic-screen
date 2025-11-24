@@ -69,18 +69,20 @@ class SimpleCanvas {
       fontData = fonts.mini;
     }
     
-    const { charWidth, charHeight, patterns } = fontData;
+    const { charHeight, patterns } = fontData;
     
     let offsetX = 0;
     for (const char of text) {
       const pattern = patterns[char];
       if (pattern) {
-        for (let py = 0; py < charHeight; py++) {
-          for (let px = 0; px < charWidth; px++) {
-            const drawX = x + offsetX + px;
-            const drawY = y + py;
-            if (drawX >= 0 && drawX < this.width && drawY >= 0 && drawY < this.height) {
-              if (pattern[py] && pattern[py][px]) {
+        let rightmost = 0;
+        for (let py = 0; py < pattern.length; py++) {
+          for (let px = 0; px < pattern[py].length; px++) {
+            if (pattern[py][px]) {
+              rightmost = Math.max(rightmost, px);
+              const drawX = x + offsetX + px;
+              const drawY = y + py;
+              if (drawX >= 0 && drawX < this.width && drawY >= 0 && drawY < this.height) {
                 const i = (drawY * this.width + drawX) * 4;
                 this.pixels[i] = color.r;
                 this.pixels[i + 1] = color.g;
@@ -90,7 +92,7 @@ class SimpleCanvas {
             }
           }
         }
-        offsetX += charWidth + 1;
+        offsetX += rightmost + 2;
       }
     }
   }
@@ -172,7 +174,21 @@ class SimpleCanvas {
     } else {
       fontData = fonts.mini;
     }
-    return { width: text.length * (fontData.charWidth + 1) };
+    
+    let totalWidth = 0;
+    for (const char of text) {
+      const pattern = fontData.patterns[char];
+      if (pattern) {
+        let rightmost = 0;
+        for (let py = 0; py < pattern.length; py++) {
+          for (let px = 0; px < pattern[py].length; px++) {
+            if (pattern[py][px]) rightmost = Math.max(rightmost, px);
+          }
+        }
+        totalWidth += rightmost + 2;
+      }
+    }
+    return { width: totalWidth - 1 };
   }
 
   hexToRgb(hex) {
