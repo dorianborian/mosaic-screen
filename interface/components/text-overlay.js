@@ -12,7 +12,8 @@ class TextOverlay extends LitElement {
     scroll: { type: Boolean },
     speed: { type: Number },
     bgColor: { type: String },
-    bgAlpha: { type: Number }
+    bgAlpha: { type: Number },
+    useClock: { type: Boolean }
   };
 
   constructor() {
@@ -25,6 +26,7 @@ class TextOverlay extends LitElement {
     this.speed = 2;
     this.bgColor = '#000000';
     this.bgAlpha = 0.2;
+    this.useClock = false;
   }
 
   render() {
@@ -32,15 +34,16 @@ class TextOverlay extends LitElement {
       <div class="box">
         <h2>Text Overlay</h2>
         <label><input type="checkbox" ?checked=${this.enabled} @change=${e => this.enabled = e.target.checked}> Enable</label>
-        <input type="text" .value=${this.text} @input=${e => this.text = e.target.value} placeholder="Text">
+        <label><input type="checkbox" ?checked=${this.useClock} @change=${e => this.useClock = e.target.checked}> Use Clock</label>
+        <input type="text" .value=${this.text} @input=${e => this.text = e.target.value} placeholder="Text" ?disabled=${this.useClock}>
         <select .value=${this.font} @change=${e => this.font = e.target.value}>
           <option value="">Small</option>
           <option value="medium">Medium</option>
           <option value="big">Big</option>
         </select>
         <label>Text Color: <input type="color" .value=${this.color} @input=${e => this.color = e.target.value}></label>
-        <label><input type="checkbox" ?checked=${this.scroll} @change=${e => this.scroll = e.target.checked}> Scroll</label>
-        <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @input=${e => this.speed = parseInt(e.target.value)}> ${this.speed}</label>
+        <label><input type="checkbox" ?checked=${this.scroll} @change=${e => this.scroll = e.target.checked} ?disabled=${this.useClock}> Scroll</label>
+        <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @input=${e => this.speed = parseInt(e.target.value)} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
         <label>BG Color: <input type="color" .value=${this.bgColor} @input=${e => this.bgColor = e.target.value}></label>
         <label>BG Alpha: <input type="range" min="0" max="1" step="0.1" .value=${this.bgAlpha} @input=${e => this.bgAlpha = parseFloat(e.target.value)}> ${this.bgAlpha}</label>
         <button @click=${this.apply}>Apply</button>
@@ -60,7 +63,8 @@ class TextOverlay extends LitElement {
         scroll: this.scroll,
         speed: this.speed,
         bgColor: this.bgColor,
-        bgAlpha: this.bgAlpha
+        bgAlpha: this.bgAlpha,
+        useClock: this.useClock
       })
     });
   }

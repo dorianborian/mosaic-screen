@@ -86,6 +86,7 @@ let textState = {
   speed: 2,
   bgColor: '#000000',
   bgAlpha: 0.2,
+  useClock: false,
   x: 0
 };
 
@@ -254,9 +255,7 @@ function runScreen(change) {
     } else if (change.color) {
       // Solid color!
       done(changeColor(change.color));
-    } else if (change.clock) {
-      // Clock!
-      done(changeClock(change.clock));
+
     } else if (change.plasma) {
       // Magic rainbow plasma
       done(plasma(change.plasma));
@@ -308,30 +307,7 @@ function drawClock(color) {
   ctx.fillText(minutesStr, 2, 8);   
 }
 
-// Clock mode!
-function changeClock({ color = "red" }) {
-  textState.enabled = true;
-  textState.font = 'medium';
-  textState.color = color;
-  textState.x = 2;
-  textState.y = 1;
-  
-  function clockLoop() {
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    const time = new Date();
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    let hours = time.getHours();
-    let isPM = hours >= 12;
-    if (hours > 12) hours = hours - 12;
-    if (hours === 0) hours = 12;
-    const hoursStr = hours.toString().padStart(2, '0');
-    const minutesStr = minutes + (isPM ? '.' : ' ');
-    textState.text = hoursStr + '\n' + minutesStr;
-  }
-  clockLoop();
-  return setInterval(clockLoop, 1000);
-}
+
 
 // Rotation mode.
 function rotateModes(seconds) {
@@ -427,19 +403,35 @@ function applyBackgroundFade() {
 // Apply text overlay to current pixel buffer
 let scrollX = width;
 function applyTextOverlay() {
-  if (!textState.enabled || !textState.text) return;
+  if (!textState.enabled) return;
+  
+  let displayText = textState.text;
+  
+  if (textState.useClock) {
+    const time = new Date();
+    const minutes = time.getMinutes().toString().padStart(2, '0');
+    let hours = time.getHours();
+    let isPM = hours >= 12;
+    if (hours > 12) hours = hours - 12;
+    if (hours === 0) hours = 12;
+    const hoursStr = hours.toString().padStart(2, '0');
+    const minutesStr = minutes + (isPM ? '.' : ' ');
+    displayText = hoursStr + '\n' + minutesStr;
+  }
+  
+  if (!displayText) return;
   
   ctx.fillStyle = textState.color;
   ctx.font = textState.font;
   
-  if (textState.scroll) {
-    const textSize = ctx.measureText(textState.text);
+  if (textState.scroll && !textState.useClock) {
+    const textSize = ctx.measureText(displayText);
     const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
-    ctx.fillText(textState.text, Math.floor(scrollX), y);
+    ctx.fillText(displayText, Math.floor(scrollX), y);
     scrollX -= textState.speed / 10;
     if (scrollX < -textSize.width) scrollX = width;
   } else {
-    const lines = textState.text.split('\n');
+    const lines = displayText.split('\n');
     lines.forEach((line, i) => {
       const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
       ctx.fillText(line, textState.x, i * lineHeight);
