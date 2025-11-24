@@ -442,27 +442,14 @@ function applyTextOverlay() {
     });
   }
   
-  if (textState.invert) {
-    const fgRGB = hexToRGB(textState.color);
-    for (let i = 0; i < width * height; i++) {
-      const pos = i * 4;
-      const isText = tempCanvas.pixels[pos + 3] > 0;
-      if (!isText) {
-        ctx.pixels[pos] = fgRGB.r;
-        ctx.pixels[pos + 1] = fgRGB.g;
-        ctx.pixels[pos + 2] = fgRGB.b;
-      }
-    }
-  } else {
-    const fgRGB = hexToRGB(textState.color);
-    for (let i = 0; i < width * height; i++) {
-      const pos = i * 4;
-      const isText = tempCanvas.pixels[pos + 3] > 0;
-      if (isText) {
-        ctx.pixels[pos] = fgRGB.r;
-        ctx.pixels[pos + 1] = fgRGB.g;
-        ctx.pixels[pos + 2] = fgRGB.b;
-      }
+  const fgRGB = hexToRGB(textState.color);
+  for (let i = 0; i < width * height; i++) {
+    const pos = i * 4;
+    const isText = tempCanvas.pixels[pos + 3] > 0;
+    if (textState.invert ? !isText : isText) {
+      ctx.pixels[pos] = fgRGB.r;
+      ctx.pixels[pos + 1] = fgRGB.g;
+      ctx.pixels[pos + 2] = fgRGB.b;
     }
   }
 }
