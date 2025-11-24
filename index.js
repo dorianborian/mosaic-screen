@@ -113,8 +113,10 @@ images.forEach(file => {
 // Server stuff
 const express = require("express");
 const http = require("http");
+const WebSocket = require('ws');
 const app = express();
 const httpServer = http.createServer(app);
+const wss = new WebSocket.Server({ server: httpServer });
 
 // CONTROL API: ===============================================================
 let currentInterval = null; // Interval for the currently running mode
@@ -528,12 +530,14 @@ function changeColor(color) {
 }
 
 // Run the random plasma animation at 60fps.
+let currentPlasmaParams = { modA: 0, modB: 0, modC: 0, plasmaBrightness: 1.0 };
 function plasma({ 
   modA = Math.random() * 64, 
   modB = Math.random() * 64, 
   modC = Math.random() * 64,
   plasmaBrightness = 1.0
 }) {
+  currentPlasmaParams = { modA, modB, modC, plasmaBrightness };
   var w = canvas.width;
   var h = canvas.height;
   var buffer = new Array(h);
@@ -782,6 +786,24 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   ws281x.reset();
   process.exit(0);
+});
+
+// =============================================================================
+// ======================== WebSocket Setup ====================================
+// =============================================================================
+wss.on('connection', (ws) => {
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === 'plasma-update') {
+        changeScreen({ plasma: data.params });
+      } else if (data.type === 'get-plasma') {
+        ws.send(JSON.stringify({ type: 'plasma-state', params: currentPlasmaParams }));
+      }
+    } catch (err) {
+      console.error('WebSocket message error:', err);
+    }
+  });
 });
 
 // =============================================================================

@@ -1,7 +1,7 @@
 import { html, render } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import './components/global-controls.js';
 import './components/text-overlay.js';
-import './components/plasma-controls.js';
+import './components/plasma-3d-controls.js';
 import './components/animations.js';
 
 
@@ -13,7 +13,7 @@ const appTemplate = html`
   <h1>Dorian's Mosaic Controller</h1>
   <global-controls></global-controls>
   <text-overlay></text-overlay>
-  <plasma-controls></plasma-controls>
+  <plasma-3d-controls></plasma-3d-controls>
   <animations-list></animations-list>
 
 

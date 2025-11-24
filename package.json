@@ -23,6 +23,7 @@
   "dependencies": {
     "express": "^4.21.1",
     "rpi-ws281x-native": "^1.0.4",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "ws": "^8.18.0"
   }
 }
