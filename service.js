@@ -14,7 +14,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=${WORKING_DIR}
-ExecStart=/usr/bin/node ${path.join(WORKING_DIR, 'index.js')}
+ExecStart=/usr/local/bin/node ${path.join(WORKING_DIR, 'index.js')}
 Restart=on-failure
 RestartSec=10
 
