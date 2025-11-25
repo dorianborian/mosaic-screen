@@ -84,7 +84,7 @@ class TextOverlay extends LitElement {
         <div class="grid">
           <label><input type="checkbox" ?checked=${this.enabled} @change=${e => { this.enabled = e.target.checked; this.send(); }}> Enable</label>
           <label><input type="checkbox" ?checked=${this.useClock} @change=${e => { this.useClock = e.target.checked; this.send(); }}> Use Clock</label>
-          <input class="full" type="text" .value=${this.text} @change=${e => { this.text = e.target.value; this.send(); }} placeholder="Text" ?disabled=${this.useClock}>
+          <input class="full" type="text" .value=${this.text} @input=${e => { this.text = e.target.value; this.send(); }} placeholder="Text" ?disabled=${this.useClock}>
           <select .value=${this.font} @change=${e => { this.font = e.target.value; this.send(); }}>
             <option value="">Small</option>
             <option value="medium">Medium</option>
