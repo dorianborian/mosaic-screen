@@ -4,7 +4,7 @@ export function LiveView() {
   canvas.style.cssText = 'width:300px;height:300px;image-rendering:pixelated;border:2px solid #0f0';
   const ctx = canvas.getContext('2d');
   
-  const ws = new WebSocket(`ws://${location.host}/peek`);
+  const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/peek`);
   ws.binaryType = 'arraybuffer';
   
   ws.onmessage = (e) => {
