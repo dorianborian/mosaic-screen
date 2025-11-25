@@ -20,6 +20,12 @@ class TabbedModes extends LitElement {
 
   switchTab(tab) {
     this.activeTab = tab;
+    this.requestUpdate();
+    setTimeout(() => {
+      const slot = this.shadowRoot.querySelector(`slot[name="${tab}"]`);
+      const el = slot?.assignedElements()[0];
+      el?.dispatchEvent(new CustomEvent('activate', { bubbles: true, detail: { mode: tab } }));
+    }, 0);
   }
 
   render() {

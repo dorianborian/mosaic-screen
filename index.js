@@ -739,6 +739,7 @@ function renderFrame() {
     }
     ws281x.render();
   }
+  broadcastPeek();
   setTimeout(renderFrame, FRAME_RATE_TIME);
 }
 
@@ -801,7 +802,15 @@ process.on('SIGTERM', () => {
 // =============================================================================
 // ======================== WebSocket Setup ====================================
 // =============================================================================
-wss.on('connection', (ws) => {
+const peekClients = new Set();
+
+wss.on('connection', (ws, req) => {
+  if (req.url === '/peek') {
+    peekClients.add(ws);
+    ws.on('close', () => peekClients.delete(ws));
+    return;
+  }
+  
   ws.on('message', (message) => {
     const str = message.toString();
     if (str === 'get') {
@@ -816,6 +825,25 @@ wss.on('connection', (ws) => {
     }
   });
 });
+
+function broadcastPeek() {
+  if (peekClients.size === 0) return;
+  const imageData = ctx.getImageData(0, 0, width, height).data;
+  const compressed = [];
+  let i = 0;
+  while (i < 225) {
+    const r = imageData[i * 4], g = imageData[i * 4 + 1], b = imageData[i * 4 + 2];
+    let run = 1;
+    while (i + run < 225 && run < 255 && 
+           imageData[(i + run) * 4] === r && 
+           imageData[(i + run) * 4 + 1] === g && 
+           imageData[(i + run) * 4 + 2] === b) run++;
+    compressed.push(run, r, g, b);
+    i += run;
+  }
+  const buf = Buffer.from(compressed);
+  peekClients.forEach(ws => ws.readyState === 1 && ws.send(buf));
+}
 
 // =============================================================================
 // ======================== Setup Server Endpoint ==============================
@@ -832,6 +860,21 @@ const nm = `./node_modules`;
 
 app.use("/images", express.static(`./images/`));
 app.use(express.json());
+
+// Peek interface
+app.get("/peek", (req, res) => {
+  res.sendFile(path.join(__dirname, 'interface', 'peek.html'));
+});
+
+// Raw matrix data API
+app.get("/matrix", (req, res) => {
+  const imageData = ctx.getImageData(0, 0, width, height).data;
+  const matrix = [];
+  for (let i = 0; i < 225; i++) {
+    matrix.push([imageData[i * 4], imageData[i * 4 + 1], imageData[i * 4 + 2]]);
+  }
+  res.json({ width, height, pixels: matrix });
+});
 
 // Data Output (read animations).
 app.get("/data", (req, res) => {

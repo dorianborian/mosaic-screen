@@ -21,7 +21,7 @@ class ColorPickerWrapper extends LitElement {
   }
 
   firstUpdated() {
-    const pickr = Pickr.create({
+    this.pickr = Pickr.create({
       el: this.querySelector('.pickr'),
       theme: 'classic',
       default: this.value,
@@ -38,10 +38,16 @@ class ColorPickerWrapper extends LitElement {
       }
     });
 
-    pickr.on('change', (color) => {
+    this.pickr.on('change', (color) => {
       this.value = color.toHEXA().toString();
       this.dispatchEvent(new CustomEvent('change', { detail: { value: this.value } }));
     });
+  }
+
+  updated(changed) {
+    if (changed.has('value') && this.pickr) {
+      this.pickr.setColor(this.value);
+    }
   }
 
   render() {

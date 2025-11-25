@@ -132,23 +132,33 @@ class Plasma3DControls extends LitElement {
   }
 
   updateParamsFromRotation() {
-    this.modA = Math.max(0.1, Math.min(64, ((this.rotation.x + Math.PI) / (Math.PI * 2)) * 64));
-    this.modB = Math.max(0.1, Math.min(64, ((this.rotation.y + Math.PI) / (Math.PI * 2)) * 64));
-    this.modC = Math.max(0.1, Math.min(64, (Math.abs(this.rotation.x) + Math.abs(this.rotation.y)) / 2 * 10));
+    const newA = Math.max(0.1, Math.min(64, ((this.rotation.x + Math.PI) / (Math.PI * 2)) * 64));
+    const newB = Math.max(0.1, Math.min(64, ((this.rotation.y + Math.PI) / (Math.PI * 2)) * 64));
+    const newC = Math.max(0.1, Math.min(64, (Math.abs(this.rotation.x) + Math.abs(this.rotation.y)) / 2 * 10));
+    
+    this.modA = newA;
+    this.modB = newB;
+    this.modC = newC;
     
     if (this.ws?.readyState === WebSocket.OPEN) {
-      const a = this.modA.toFixed(1);
-      const b = this.modB.toFixed(1);
-      const c = this.modC.toFixed(1);
-      this.ws.send(`${a},${b},${c}`);
+      this.ws.send(`${newA.toFixed(1)},${newB.toFixed(1)},${newC.toFixed(1)}`);
     }
-    this.requestUpdate();
   }
 
   updateRotationFromParams() {
     this.rotation.x = (this.modA / 64) * (Math.PI * 2) - Math.PI;
     this.rotation.y = (this.modB / 64) * (Math.PI * 2) - Math.PI;
-    this.requestUpdate();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('activate', (e) => {
+      fetch('/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [e.detail.mode]: { modA: this.modA, modB: this.modB, modC: this.modC } })
+      });
+    });
   }
 
   randomize() {

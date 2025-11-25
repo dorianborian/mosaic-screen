@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix Peek</title>
+  <style>
+    body { margin: 0; padding: 20px; background: #000; color: #0f0; font-family: monospace; }
+    #container { display: flex; gap: 20px; flex-wrap: wrap; }
+    canvas { image-rendering: pixelated; border: 1px solid #0f0; }
+    #stats { white-space: pre; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="canvas" width="15" height="15"></canvas>
+    <div id="stats"></div>
+  </div>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const stats = document.getElementById('stats');
+    const scale = 20;
+    canvas.style.width = (15 * scale) + 'px';
+    canvas.style.height = (15 * scale) + 'px';
+    
+    let fps = 0, frames = 0, lastTime = Date.now();
+    
+    const ws = new WebSocket(`ws://${location.host}/peek`);
+    ws.binaryType = 'arraybuffer';
+    
+    ws.onmessage = (e) => {
+      const data = new Uint8Array(e.data);
+      const imgData = ctx.createImageData(15, 15);
+      
+      let pos = 0, i = 0;
+      while (i < data.length) {
+        const run = data[i++], r = data[i++], g = data[i++], b = data[i++];
+        for (let j = 0; j < run; j++) {
+          imgData.data[pos++] = r;
+          imgData.data[pos++] = g;
+          imgData.data[pos++] = b;
+          imgData.data[pos++] = 255;
+        }
+      }
+      
+      ctx.putImageData(imgData, 0, 0);
+      
+      frames++;
+      const now = Date.now();
+      if (now - lastTime > 1000) {
+        fps = frames;
+        frames = 0;
+        lastTime = now;
+        stats.textContent = `FPS: ${fps}\nBytes: ${data.length}\nPixels: 225`;
+      }
+    };
+  </script>
+</body>
+</html>

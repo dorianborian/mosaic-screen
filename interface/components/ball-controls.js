@@ -8,16 +8,39 @@ class BallControls extends LitElement {
     .pickr { display: none !important; }
   `];
 
+  constructor() {
+    super();
+    this.color = localStorage.getItem('ballColor') || '#ff0000';
+  }
+
   createRenderRoot() {
     return this;
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('activate', (e) => {
+      fetch('/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [e.detail.mode]: this.color })
+      });
+    });
+  }
+
   handleChange(e) {
-    post('ball', e.detail.value);
+    this.color = e.detail.value;
+    localStorage.setItem('ballColor', this.color);
+    post('ball', this.color);
+  }
+
+  firstUpdated() {
+    const picker = this.querySelector('color-picker-wrapper');
+    if (picker) picker.value = this.color;
   }
 
   render() {
-    return html`<color-picker-wrapper @change=${this.handleChange}></color-picker-wrapper>`;
+    return html`<color-picker-wrapper .value=${this.color} @change=${this.handleChange}></color-picker-wrapper>`;
   }
 }
 
