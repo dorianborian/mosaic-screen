@@ -8,12 +8,14 @@ class ColorPickerWrapper extends LitElement {
   `;
 
   static properties = {
-    value: { type: String }
+    value: { type: String },
+    compact: { type: Boolean }
   };
 
   constructor() {
     super();
     this.value = '#ff0000';
+    this.compact = false;
   }
 
   createRenderRoot() {
@@ -23,7 +25,7 @@ class ColorPickerWrapper extends LitElement {
   firstUpdated() {
     this.pickr = Pickr.create({
       el: this.querySelector('.pickr'),
-      theme: 'classic',
+      theme: this.compact ? 'nano' : 'classic',
       default: this.value,
       inline: true,
       showAlways: true,

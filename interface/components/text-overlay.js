@@ -1,8 +1,20 @@
-import { LitElement, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import { theme, baseStyles } from '../theme.js';
+import './color-picker-wrapper.js';
 
 class TextOverlay extends LitElement {
-  static styles = [theme, baseStyles];
+  static styles = [theme, baseStyles, css`
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .full { grid-column: 1 / -1; }
+    input[type="text"] { width: 100%; }
+    select { width: 100%; }
+    .picker-group { display: flex; flex-direction: column; gap: 5px; }
+    .picker-group label { font-size: 12px; font-weight: bold; }
+  `];
+
+  createRenderRoot() {
+    return this;
+  }
 
   static properties = {
     enabled: { type: Boolean },
@@ -31,25 +43,42 @@ class TextOverlay extends LitElement {
     this.invert = false;
   }
 
+  firstUpdated() {
+    const fgPicker = this.querySelectorAll('color-picker-wrapper')[0];
+    const bgPicker = this.querySelectorAll('color-picker-wrapper')[1];
+    if (fgPicker) fgPicker.value = this.color;
+    if (bgPicker) bgPicker.value = this.bgColor;
+  }
+
   render() {
     return html`
       <div class="box">
         <h2>Text Overlay</h2>
-        <label><input type="checkbox" ?checked=${this.enabled} @change=${e => this.enabled = e.target.checked}> Enable</label>
-        <label><input type="checkbox" ?checked=${this.useClock} @change=${e => this.useClock = e.target.checked}> Use Clock</label>
-        <input type="text" .value=${this.text} @input=${e => this.text = e.target.value} placeholder="Text" ?disabled=${this.useClock}>
-        <select .value=${this.font} @change=${e => this.font = e.target.value}>
-          <option value="">Small</option>
-          <option value="medium">Medium</option>
-          <option value="big">Big</option>
-        </select>
-        <label>Foreground Color: <input type="color" .value=${this.color} @input=${e => this.color = e.target.value}></label>
-        <label><input type="checkbox" ?checked=${this.invert} @change=${e => this.invert = e.target.checked}> Invert Text</label>
-        <label><input type="checkbox" ?checked=${this.scroll} @change=${e => this.scroll = e.target.checked} ?disabled=${this.useClock}> Scroll</label>
-        <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @input=${e => this.speed = parseInt(e.target.value)} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
-        <label>BG Color: <input type="color" .value=${this.bgColor} @input=${e => this.bgColor = e.target.value}></label>
-        <label>BG Alpha: <input type="range" min="0" max="1" step="0.1" .value=${this.bgAlpha} @input=${e => this.bgAlpha = parseFloat(e.target.value)}> ${this.bgAlpha}</label>
-        <button @click=${this.apply}>Apply</button>
+        <div class="grid">
+          <label><input type="checkbox" ?checked=${this.enabled} @change=${e => this.enabled = e.target.checked}> Enable</label>
+          <label><input type="checkbox" ?checked=${this.useClock} @change=${e => this.useClock = e.target.checked}> Use Clock</label>
+          <input class="full" type="text" .value=${this.text} @input=${e => this.text = e.target.value} placeholder="Text" ?disabled=${this.useClock}>
+          <select .value=${this.font} @change=${e => this.font = e.target.value}>
+            <option value="">Small</option>
+            <option value="medium">Medium</option>
+            <option value="big">Big</option>
+          </select>
+          <label><input type="checkbox" ?checked=${this.invert} @change=${e => this.invert = e.target.checked}> Invert</label>
+          <div class="full" style="display:flex;gap:20px">
+            <div class="picker-group">
+              <label>FG Color</label>
+              <color-picker-wrapper compact .value=${this.color} @change=${e => this.color = e.detail.value}></color-picker-wrapper>
+            </div>
+            <div class="picker-group">
+              <label>BG Color</label>
+              <color-picker-wrapper compact .value=${this.bgColor} @change=${e => this.bgColor = e.detail.value}></color-picker-wrapper>
+            </div>
+          </div>
+          <label><input type="checkbox" ?checked=${this.scroll} @change=${e => this.scroll = e.target.checked} ?disabled=${this.useClock}> Scroll</label>
+          <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @input=${e => this.speed = parseInt(e.target.value)} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
+          <label>BG Alpha: <input type="range" min="0" max="1" step="0.1" .value=${this.bgAlpha} @input=${e => this.bgAlpha = parseFloat(e.target.value)}> ${this.bgAlpha}</label>
+          <button class="full" @click=${this.apply}>Apply</button>
+        </div>
       </div>
     `;
   }
