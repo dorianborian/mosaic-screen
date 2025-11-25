@@ -3,15 +3,6 @@ import { theme, baseStyles } from '../theme.js';
 import './color-picker-wrapper.js';
 
 class TextOverlay extends LitElement {
-  static styles = [theme, baseStyles, css`
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .full { grid-column: 1 / -1; }
-    input[type="text"] { width: 100%; }
-    select { width: 100%; }
-    .picker-group { display: flex; flex-direction: column; gap: 5px; }
-    .picker-group label { font-size: 12px; font-weight: bold; }
-  `];
-
   createRenderRoot() {
     return this;
   }
@@ -81,12 +72,19 @@ class TextOverlay extends LitElement {
         <div class="grid">
           <label><input type="checkbox" ?checked=${this.enabled} @change=${e => { this.enabled = e.target.checked; this.send(); }}> Enable</label>
           <label><input type="checkbox" ?checked=${this.useClock} @change=${e => { this.useClock = e.target.checked; this.send(); }}> Use Clock</label>
-          <input class="full" type="text" .value=${this.text} @input=${e => { this.text = e.target.value; this.send(); }} placeholder="Text" ?disabled=${this.useClock}>
-          <select .value=${this.font} @change=${e => { this.font = e.target.value; this.send(); }}>
-            <option value="">Small</option>
-            <option value="medium">Medium</option>
-            <option value="big">Big</option>
-          </select>
+          <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
+            <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; opacity: 0.8;">Text Content</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" style="flex: 1;" .value=${this.text} @input=${e => { this.text = e.target.value; this.send(); }} placeholder="Text" ?disabled=${this.useClock}>
+              <select style="width: auto; min-width: 100px;" .value=${this.font} @change=${e => { this.font = e.target.value; this.send(); }}>
+                <option value="">Small</option>
+                <option value="medium">Medium</option>
+                <option value="big">Big</option>
+              </select>
+            </div>
+            <label><input type="checkbox" ?checked=${this.scroll} @change=${e => { this.scroll = e.target.checked; this.send(); }} ?disabled=${this.useClock}> Scroll</label>
+            <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @change=${e => { this.speed = parseInt(e.target.value); this.send(); }} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
+          </div>
           <label><input type="checkbox" ?checked=${this.invert} @change=${e => { this.invert = e.target.checked; this.send(); }}> Invert</label>
           <div class="full" style="display:flex;gap:20px">
             <div class="picker-group">
@@ -98,8 +96,6 @@ class TextOverlay extends LitElement {
               <color-picker-wrapper compact .value=${this.bgColor} @change=${e => { this.bgColor = e.detail.value; this.send(); }}></color-picker-wrapper>
             </div>
           </div>
-          <label><input type="checkbox" ?checked=${this.scroll} @change=${e => { this.scroll = e.target.checked; this.send(); }} ?disabled=${this.useClock}> Scroll</label>
-          <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @change=${e => { this.speed = parseInt(e.target.value); this.send(); }} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
         </div>
       </div>
     `;
