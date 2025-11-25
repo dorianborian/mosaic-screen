@@ -1,17 +1,23 @@
-import { LitElement, html } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import './color-picker-wrapper.js';
 import { post } from '../utils.js';
 import { theme, baseStyles } from '../theme.js';
 
 class ColorControls extends LitElement {
-  static styles = [theme, baseStyles];
+  static styles = [theme, baseStyles, css`
+    .pickr { display: none !important; }
+  `];
+
+  createRenderRoot() {
+    return this;
+  }
+
+  handleChange(e) {
+    post('color', e.detail.value);
+  }
 
   render() {
-    return html`
-      <div class="box">
-        <h2>Solid Color</h2>
-        <label>Color: <input type="color" value="#ff0000" @change=${e => post('color', e.target.value)}></label>
-      </div>
-    `;
+    return html`<color-picker-wrapper @change=${this.handleChange}></color-picker-wrapper>`;
   }
 }
 

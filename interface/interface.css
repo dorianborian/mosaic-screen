@@ -67,3 +67,8 @@ button#plasma {
   background-size: cover;
   background-color: white;
 }
+
+/* Hide the pickr button */
+div.pickr {
+  display: none !important;
+}

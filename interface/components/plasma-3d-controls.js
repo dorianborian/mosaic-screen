@@ -4,7 +4,7 @@ import { theme, baseStyles } from '../theme.js';
 
 class Plasma3DControls extends LitElement {
   static styles = [theme, baseStyles, css`
-    #canvas3d { width: 100%; height: 300px; cursor: grab; touch-action: none; }
+    #canvas3d { display: block; width: 100%; height: 300px; cursor: grab; touch-action: none; }
     #canvas3d:active { cursor: grabbing; }
     .controls { display: flex; gap: 10px; margin-top: 10px; }
     .values { font-family: monospace; font-size: 12px; margin-top: 5px; }
@@ -23,11 +23,19 @@ class Plasma3DControls extends LitElement {
     this.modC = 32;
     this.rotation = { x: 0, y: 0 };
     this.ws = null;
+    this.initialized = false;
   }
 
   firstUpdated() {
     this.initWebSocket();
-    this.init3D();
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !this.initialized) {
+        this.initialized = true;
+        this.init3D();
+        observer.disconnect();
+      }
+    });
+    observer.observe(this);
   }
 
   initWebSocket() {
@@ -51,10 +59,13 @@ class Plasma3DControls extends LitElement {
 
   init3D() {
     const canvas = this.shadowRoot.getElementById('canvas3d');
+    if (!canvas) return;
+    const width = canvas.parentElement?.clientWidth || 300;
+    const height = 300;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
     
     const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
@@ -148,15 +159,12 @@ class Plasma3DControls extends LitElement {
 
   render() {
     return html`
-      <div class="box">
-        <h2>Plasma 3D Control</h2>
-        <canvas id="canvas3d"></canvas>
-        <div class="values">
-          modA: ${this.modA.toFixed(2)} | modB: ${this.modB.toFixed(2)} | modC: ${this.modC.toFixed(2)}
-        </div>
-        <div class="controls">
-          <button @click=${this.randomize}>Randomize</button>
-        </div>
+      <canvas id="canvas3d"></canvas>
+      <div class="values">
+        modA: ${this.modA.toFixed(2)} | modB: ${this.modB.toFixed(2)} | modC: ${this.modC.toFixed(2)}
+      </div>
+      <div class="controls">
+        <button @click=${this.randomize}>Randomize</button>
       </div>
     `;
   }

@@ -122,8 +122,6 @@ const wss = new WebSocket.Server({ server: httpServer });
 let currentInterval = null; // Interval for the currently running mode
 let rotationModeInterval = null; // Interval within the rotation mode
 function changeScreen(change) {
-  console.log('Mode change request:', change);
-
   // Run the screen promise, then reset the current global interval.
   runScreen(change).then((interval) => {
     clearInterval(currentInterval);

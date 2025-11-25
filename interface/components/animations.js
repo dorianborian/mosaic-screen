@@ -25,15 +25,12 @@ class AnimationsList extends LitElement {
 
   render() {
     return html`
-      <div class="box">
-        <h2>Animations</h2>
-        ${Object.entries(this.images).map(([name, { fps }]) => html`
-          <button 
-            style="background-image: url('/images/animations/${name}_${fps}.png')"
-            @click=${() => post('image', name)}
-          >${name}</button>
-        `)}
-      </div>
+      ${Object.entries(this.images).map(([name, { fps }]) => html`
+        <button 
+          style="background-image: url('/images/animations/${name}_${fps}.png')"
+          @click=${() => post('image', name)}
+        >${name}</button>
+      `)}
     `;
   }
 }
