@@ -46,7 +46,7 @@ function generateFontPNG(fontData, outputPath) {
 }
 
 const fontFiles = ['mini-font.json', 'medium-font.json', 'big-font.json'];
-const fontsDir = path.join(__dirname, 'fonts');
+const fontsDir = path.join(__dirname, '..', '..', 'fonts');
 
 fontFiles.forEach(file => {
   const jsonPath = path.join(fontsDir, file);

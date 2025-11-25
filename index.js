@@ -1,7 +1,7 @@
 /**
  * @file Main file for Mosaic Screen! Your friendly neopixel screen controller
  */
-const { SimpleCanvas } = require('./simple-canvas');
+const { SimpleCanvas } = require('./src/lib/simple-canvas');
 const createCanvas = (w, h) => new SimpleCanvas(w, h);
 
 // Load PNG sprite sheets
@@ -81,11 +81,10 @@ let textState = {
   enabled: false,
   text: '',
   font: 'medium',
-  color: '#000000',
+  color: '#000000ff',
   scroll: false,
   speed: 2,
-  bgColor: '#000000',
-  bgAlpha: 0.8,
+  bgColor: '#000000cc',
   useClock: false,
   invert: false,
   x: 0
@@ -390,13 +389,15 @@ function clearScreen() {
 
 // Apply background fade
 function applyBackgroundFade() {
-  if (textState.enabled && textState.bgAlpha > 0) {
-    const bgRGB = hexToRGB(textState.bgColor);
-    for (let i = 0; i < width * height; i++) {
-      const pos = i * 4;
-      ctx.pixels[pos] = bgRGB.r * textState.bgAlpha + ctx.pixels[pos] * (1 - textState.bgAlpha);
-      ctx.pixels[pos + 1] = bgRGB.g * textState.bgAlpha + ctx.pixels[pos + 1] * (1 - textState.bgAlpha);
-      ctx.pixels[pos + 2] = bgRGB.b * textState.bgAlpha + ctx.pixels[pos + 2] * (1 - textState.bgAlpha);
+  if (textState.enabled) {
+    const bgRGBA = hexToRGBA(textState.bgColor);
+    if (bgRGBA.a > 0) {
+      for (let i = 0; i < width * height; i++) {
+        const pos = i * 4;
+        ctx.pixels[pos] = bgRGBA.r * bgRGBA.a + ctx.pixels[pos] * (1 - bgRGBA.a);
+        ctx.pixels[pos + 1] = bgRGBA.g * bgRGBA.a + ctx.pixels[pos + 1] * (1 - bgRGBA.a);
+        ctx.pixels[pos + 2] = bgRGBA.b * bgRGBA.a + ctx.pixels[pos + 2] * (1 - bgRGBA.a);
+      }
     }
   }
 }
@@ -442,15 +443,21 @@ function applyTextOverlay() {
     });
   }
   
-  const fgRGB = hexToRGB(textState.color);
+  const fgRGBA = hexToRGBA(textState.color);
   for (let i = 0; i < width * height; i++) {
     const pos = i * 4;
     const isText = tempCanvas.pixels[pos] > 0 || tempCanvas.pixels[pos + 1] > 0 || tempCanvas.pixels[pos + 2] > 0;
     const shouldPaint = textState.invert ? !isText : isText;
     if (shouldPaint) {
-      ctx.pixels[pos] = fgRGB.r;
-      ctx.pixels[pos + 1] = fgRGB.g;
-      ctx.pixels[pos + 2] = fgRGB.b;
+      if (fgRGBA.a >= 1) {
+        ctx.pixels[pos] = fgRGBA.r;
+        ctx.pixels[pos + 1] = fgRGBA.g;
+        ctx.pixels[pos + 2] = fgRGBA.b;
+      } else {
+        ctx.pixels[pos] = fgRGBA.r * fgRGBA.a + ctx.pixels[pos] * (1 - fgRGBA.a);
+        ctx.pixels[pos + 1] = fgRGBA.g * fgRGBA.a + ctx.pixels[pos + 1] * (1 - fgRGBA.a);
+        ctx.pixels[pos + 2] = fgRGBA.b * fgRGBA.a + ctx.pixels[pos + 2] * (1 - fgRGBA.a);
+      }
     }
   }
 }
@@ -585,11 +592,17 @@ function plasma({
   return plasmaInterval;
 }
 
-function hexToRGB(hex) {
+function hexToRGBA(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  return { r, g, b };
+  const a = hex.length >= 9 ? parseInt(hex.slice(7, 9), 16) / 255 : 1;
+  return { r, g, b, a };
+}
+
+function hexToRGB(hex) {
+  const rgba = hexToRGBA(hex);
+  return { r: rgba.r, g: rgba.g, b: rgba.b };
 }
 
 // Convert Hue, Saturation, & Brightness to Red, Green, & Blue
@@ -701,7 +714,7 @@ function renderTerminal() {
   const now = Date.now();
   if (now - lastDebugTime > 2000) {
     output += `\nText: enabled=${textState.enabled} clock=${textState.useClock} scroll=${textState.scroll} invert=${textState.invert}\n`;
-    output += `Colors: fg=${textState.color} bg=${textState.bgColor} bgAlpha=${textState.bgAlpha}\n`;
+    output += `Colors: fg=${textState.color} bg=${textState.bgColor}\n`;
     lastDebugTime = now;
   }
   

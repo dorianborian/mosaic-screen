@@ -3,9 +3,9 @@ const path = require('path');
 
 // Load fonts
 const fonts = {
-  mini: JSON.parse(fs.readFileSync(path.join(__dirname, 'fonts/mini-font.json'), 'utf8')),
-  medium: JSON.parse(fs.readFileSync(path.join(__dirname, 'fonts/medium-font.json'), 'utf8')),
-  big: JSON.parse(fs.readFileSync(path.join(__dirname, 'fonts/big-font.json'), 'utf8'))
+  mini: JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'fonts/mini-font.json'), 'utf8')),
+  medium: JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'fonts/medium-font.json'), 'utf8')),
+  big: JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'fonts/big-font.json'), 'utf8'))
 };
 
 class SimpleCanvas {

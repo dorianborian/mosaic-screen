@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 
 const SERVICE_NAME = 'mosaic-screen';
 const SERVICE_PATH = `/etc/systemd/system/${SERVICE_NAME}.service`;
-const WORKING_DIR = __dirname;
+const WORKING_DIR = require('path').join(__dirname, '..');
 
 const serviceContent = `[Unit]
 Description=Mosaic Screen NeoPixel Display

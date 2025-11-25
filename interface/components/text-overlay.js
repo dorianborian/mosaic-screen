@@ -24,7 +24,6 @@ class TextOverlay extends LitElement {
     scroll: { type: Boolean },
     speed: { type: Number },
     bgColor: { type: String },
-    bgAlpha: { type: Number },
     useClock: { type: Boolean },
     invert: { type: Boolean }
   };
@@ -34,11 +33,10 @@ class TextOverlay extends LitElement {
     this.enabled = false;
     this.text = '';
     this.font = 'medium';
-    this.color = '#000000';
+    this.color = '#000000ff';
     this.scroll = false;
     this.speed = 2;
-    this.bgColor = '#000000';
-    this.bgAlpha = 0.8;
+    this.bgColor = '#000000cc';
     this.useClock = false;
     this.invert = false;
     this.loadState();
@@ -70,7 +68,6 @@ class TextOverlay extends LitElement {
         scroll: this.scroll,
         speed: this.speed,
         bgColor: this.bgColor,
-        bgAlpha: this.bgAlpha,
         useClock: this.useClock,
         invert: this.invert
       })
@@ -93,17 +90,16 @@ class TextOverlay extends LitElement {
           <label><input type="checkbox" ?checked=${this.invert} @change=${e => { this.invert = e.target.checked; this.send(); }}> Invert</label>
           <div class="full" style="display:flex;gap:20px">
             <div class="picker-group">
-              <label>FG Color</label>
+              <label>Foreground</label>
               <color-picker-wrapper compact .value=${this.color} @change=${e => { this.color = e.detail.value; this.send(); }}></color-picker-wrapper>
             </div>
             <div class="picker-group">
-              <label>BG Color</label>
+              <label>Background</label>
               <color-picker-wrapper compact .value=${this.bgColor} @change=${e => { this.bgColor = e.detail.value; this.send(); }}></color-picker-wrapper>
             </div>
           </div>
           <label><input type="checkbox" ?checked=${this.scroll} @change=${e => { this.scroll = e.target.checked; this.send(); }} ?disabled=${this.useClock}> Scroll</label>
           <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @change=${e => { this.speed = parseInt(e.target.value); this.send(); }} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
-          <label>BG Alpha: <input type="range" min="0" max="1" step="0.1" .value=${this.bgAlpha} @change=${e => { this.bgAlpha = parseFloat(e.target.value); this.send(); }}> ${this.bgAlpha}</label>
         </div>
       </div>
     `;

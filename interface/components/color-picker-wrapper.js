@@ -33,6 +33,7 @@ class ColorPickerWrapper extends LitElement {
       components: {
         preview: false,
         hue: true,
+        opacity: true,
         interaction: {
           input: false,
           save: false
