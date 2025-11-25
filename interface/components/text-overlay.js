@@ -41,6 +41,14 @@ class TextOverlay extends LitElement {
     this.bgAlpha = 0.8;
     this.useClock = false;
     this.invert = false;
+    this.loadState();
+  }
+
+  async loadState() {
+    const res = await fetch('/text');
+    const state = await res.json();
+    Object.assign(this, state);
+    this.requestUpdate();
   }
 
   firstUpdated() {
@@ -50,40 +58,7 @@ class TextOverlay extends LitElement {
     if (bgPicker) bgPicker.value = this.bgColor;
   }
 
-  render() {
-    return html`
-      <div class="box">
-        <h2>Text Overlay</h2>
-        <div class="grid">
-          <label><input type="checkbox" ?checked=${this.enabled} @change=${e => this.enabled = e.target.checked}> Enable</label>
-          <label><input type="checkbox" ?checked=${this.useClock} @change=${e => this.useClock = e.target.checked}> Use Clock</label>
-          <input class="full" type="text" .value=${this.text} @input=${e => this.text = e.target.value} placeholder="Text" ?disabled=${this.useClock}>
-          <select .value=${this.font} @change=${e => this.font = e.target.value}>
-            <option value="">Small</option>
-            <option value="medium">Medium</option>
-            <option value="big">Big</option>
-          </select>
-          <label><input type="checkbox" ?checked=${this.invert} @change=${e => this.invert = e.target.checked}> Invert</label>
-          <div class="full" style="display:flex;gap:20px">
-            <div class="picker-group">
-              <label>FG Color</label>
-              <color-picker-wrapper compact .value=${this.color} @change=${e => this.color = e.detail.value}></color-picker-wrapper>
-            </div>
-            <div class="picker-group">
-              <label>BG Color</label>
-              <color-picker-wrapper compact .value=${this.bgColor} @change=${e => this.bgColor = e.detail.value}></color-picker-wrapper>
-            </div>
-          </div>
-          <label><input type="checkbox" ?checked=${this.scroll} @change=${e => this.scroll = e.target.checked} ?disabled=${this.useClock}> Scroll</label>
-          <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @input=${e => this.speed = parseInt(e.target.value)} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
-          <label>BG Alpha: <input type="range" min="0" max="1" step="0.1" .value=${this.bgAlpha} @input=${e => this.bgAlpha = parseFloat(e.target.value)}> ${this.bgAlpha}</label>
-          <button class="full" @click=${this.apply}>Apply</button>
-        </div>
-      </div>
-    `;
-  }
-
-  apply() {
+  send() {
     fetch('/text', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,6 +76,40 @@ class TextOverlay extends LitElement {
       })
     });
   }
+
+  render() {
+    return html`
+      <div class="box">
+        <h2>Text Overlay</h2>
+        <div class="grid">
+          <label><input type="checkbox" ?checked=${this.enabled} @change=${e => { this.enabled = e.target.checked; this.send(); }}> Enable</label>
+          <label><input type="checkbox" ?checked=${this.useClock} @change=${e => { this.useClock = e.target.checked; this.send(); }}> Use Clock</label>
+          <input class="full" type="text" .value=${this.text} @change=${e => { this.text = e.target.value; this.send(); }} placeholder="Text" ?disabled=${this.useClock}>
+          <select .value=${this.font} @change=${e => { this.font = e.target.value; this.send(); }}>
+            <option value="">Small</option>
+            <option value="medium">Medium</option>
+            <option value="big">Big</option>
+          </select>
+          <label><input type="checkbox" ?checked=${this.invert} @change=${e => { this.invert = e.target.checked; this.send(); }}> Invert</label>
+          <div class="full" style="display:flex;gap:20px">
+            <div class="picker-group">
+              <label>FG Color</label>
+              <color-picker-wrapper compact .value=${this.color} @change=${e => { this.color = e.detail.value; this.send(); }}></color-picker-wrapper>
+            </div>
+            <div class="picker-group">
+              <label>BG Color</label>
+              <color-picker-wrapper compact .value=${this.bgColor} @change=${e => { this.bgColor = e.detail.value; this.send(); }}></color-picker-wrapper>
+            </div>
+          </div>
+          <label><input type="checkbox" ?checked=${this.scroll} @change=${e => { this.scroll = e.target.checked; this.send(); }} ?disabled=${this.useClock}> Scroll</label>
+          <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @change=${e => { this.speed = parseInt(e.target.value); this.send(); }} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
+          <label>BG Alpha: <input type="range" min="0" max="1" step="0.1" .value=${this.bgAlpha} @change=${e => { this.bgAlpha = parseFloat(e.target.value); this.send(); }}> ${this.bgAlpha}</label>
+        </div>
+      </div>
+    `;
+  }
+
+
 }
 
 customElements.define('text-overlay', TextOverlay);
