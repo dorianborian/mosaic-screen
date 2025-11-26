@@ -2,8 +2,9 @@ import { css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js
 
 export const theme = css`
   :host {
-    --bg-primary: #353535;
-    --bg-secondary: #2a2a2a;
+    --bg-primary: #2a2a2a;
+    --bg-secondary: #353535;
+    --border: #444;
     --text-primary: #ffffff;
     --text-secondary: #cccccc;
     --accent: #4a9eff;
@@ -23,7 +24,7 @@ export const baseStyles = css`
     padding: var(--spacing-md);
     margin: var(--spacing-md) 0;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
   }
 
   h2 {

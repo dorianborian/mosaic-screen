@@ -4,7 +4,8 @@ import { theme, baseStyles } from '../theme.js';
 
 class AnimationsList extends LitElement {
   static styles = [theme, baseStyles, css`
-    button { min-width: 100px; height: 100px; font-weight: bold; background-size: cover; image-rendering: pixelated; }
+    button { position: relative; min-width: 100px; height: 100px; background-size: cover; image-rendering: pixelated; border-radius: 8px; color: transparent; }
+    button::after { content: attr(data-name); position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 4px; font-size: 0.7rem; text-align: center; color: white; border-radius: 0 0 8px 8px; }
     button.selected { outline: 3px solid white; }
   `];
 
@@ -49,8 +50,9 @@ class AnimationsList extends LitElement {
         <button 
           class="${name === this.selected ? 'selected' : ''}"
           style="background-image: url('/images/animations/${name}_${fps}.png')"
+          data-name="${name}"
           @click=${() => this.selectAnim(name)}
-        >${name}</button>
+        ></button>
       `)}
     `;
   }

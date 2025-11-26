@@ -40,7 +40,7 @@ class BallControls extends LitElement {
   }
 
   render() {
-    return html`<color-picker-wrapper .value=${this.color} @change=${this.handleChange}></color-picker-wrapper>`;
+    return html`<color-picker-wrapper compact .value=${this.color} @change=${this.handleChange}></color-picker-wrapper>`;
   }
 }
 

@@ -4,6 +4,10 @@ import { theme, baseStyles } from '../theme.js';
 class TabbedModes extends LitElement {
   static styles = [theme, baseStyles, css`
     .tabs { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
+    @media (max-width: 768px) {
+      .tabs { justify-content: stretch; }
+      .tab { flex: 1 1 auto; min-width: 120px; }
+    }
     .tab { padding: 10px 20px; cursor: pointer; background: var(--bg-secondary); border: 1px solid #444; border-radius: 4px 4px 0 0; display: flex; align-items: center; gap: 5px; }
     .tab.active { background: var(--bg-primary); border-bottom-color: var(--bg-primary); border-top: 2px solid #4a9eff; }
     .content { border: 1px solid var(--border); border-radius: 0 4px 4px 4px; padding: 15px; }

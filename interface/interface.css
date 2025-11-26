@@ -1,16 +1,16 @@
 body {
   font-family: sans-serif;
-}
-
-body, .box {
   background-color: rgb(53, 53, 53);
   color: white;
+  padding: 0 0.5em;
 }
 
 .box {
+  background-color: rgb(42, 42, 42);
   padding: 1rem;
   margin: 1rem 0;
   border-radius: 8px;
+  border: 1px solid #444;
 }
 
 .box h2 {
@@ -61,6 +61,12 @@ body, .box {
 
 .box .full {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .box .full[style*="display:flex"] {
+    flex-direction: column !important;
+  }
 }
 
 button {
@@ -143,7 +149,8 @@ power-controls button { background: #d32f2f !important; }
 power-controls button:hover { background: #b71c1c !important; }
 
 /* Animations List */
-animations-list button { min-width: 100px; height: 100px; font-weight: bold; background-size: cover; image-rendering: pixelated; border-radius: 8px; }
+animations-list button { position: relative; min-width: 100px; height: 100px; font-weight: normal; background-size: cover; image-rendering: pixelated; border-radius: 8px; color: white; text-shadow: none; }
+animations-list button::after { content: attr(data-name); position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 4px; font-size: 0.7rem; text-align: center; }
 animations-list button.selected { outline: 3px solid white; }
 
 /* Preset buttons */
