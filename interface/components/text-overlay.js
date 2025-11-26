@@ -17,7 +17,8 @@ class TextOverlay extends LitElement {
     speed: { type: Number },
     bgColor: { type: String },
     useClock: { type: Boolean },
-    invert: { type: Boolean }
+    invert: { type: Boolean },
+    expanded: { type: Boolean }
   };
 
   constructor() {
@@ -31,6 +32,7 @@ class TextOverlay extends LitElement {
     this.bgColor = '#000000cc';
     this.useClock = false;
     this.invert = false;
+    this.expanded = false;
     this.loadState();
   }
 
@@ -69,10 +71,19 @@ class TextOverlay extends LitElement {
   render() {
     return html`
       <div class="box">
-        <h2><app-icon name="type"></app-icon> Text Overlay</h2>
-        <div class="grid">
-          <label><input type="checkbox" ?checked=${this.enabled} @change=${e => { this.enabled = e.target.checked; this.send(); }}> Enable</label>
+        <h2 style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;" @click=${() => this.expanded = !this.expanded}>
+          <span style="display: flex; align-items: center; gap: 8px;">
+            <app-icon name="${this.expanded ? 'chevron-down' : 'chevron-right'}"></app-icon>
+            <app-icon name="type"></app-icon>
+            Text Overlay
+          </span>
+          <label style="margin: 0;" @click=${(e) => e.stopPropagation()}>
+            <input type="checkbox" ?checked=${this.enabled} @change=${e => { this.enabled = e.target.checked; this.send(); }}> Enable
+          </label>
+        </h2>
+        ${this.expanded ? html`<div class="grid">
           <label><input type="checkbox" ?checked=${this.useClock} @change=${e => { this.useClock = e.target.checked; this.send(); }}> Use Clock</label>
+          <div></div>
           <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
             <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; opacity: 0.8;">Text Content</div>
             <div style="display: flex; gap: 8px; align-items: center;">
@@ -97,7 +108,7 @@ class TextOverlay extends LitElement {
               <color-picker-wrapper compact .value=${this.bgColor} @change=${e => { this.bgColor = e.detail.value; this.send(); }}></color-picker-wrapper>
             </div>
           </div>
-        </div>
+        </div>` : ''}
       </div>
     `;
   }
