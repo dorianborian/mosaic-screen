@@ -1,40 +1,39 @@
-// Demoscene-style pixel test animation
+// Spiral rainbow pixel test
 module.exports = function pixelTest(channel, ws281x, duration = 2000) {
   const start = Date.now();
-  const pixels = channel.array.length;
+  const w = 15, h = 15;
+  const cx = 7, cy = 7;
   
   const interval = setInterval(() => {
     const t = (Date.now() - start) / 1000;
     
-    for (let i = 0; i < pixels; i++) {
-      const h = (i / pixels + t * 0.5) % 1;
-      const s = 0.8 + Math.sin(t * 3 + i * 0.1) * 0.2;
-      const v = 0.5 + Math.sin(t * 2 + i * 0.05) * 0.5;
-      
-      const c = v * s;
-      const x = c * (1 - Math.abs((h * 6) % 2 - 1));
-      const m = v - c;
-      
-      let r, g, b;
-      const hi = Math.floor(h * 6);
-      switch (hi) {
-        case 0: r = c; g = x; b = 0; break;
-        case 1: r = x; g = c; b = 0; break;
-        case 2: r = 0; g = c; b = x; break;
-        case 3: r = 0; g = x; b = c; break;
-        case 4: r = x; g = 0; b = c; break;
-        default: r = c; g = 0; b = x;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const dx = x - cx, dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        const hue = (angle / (Math.PI * 2) + dist * 0.1 - t) % 1;
+        
+        const i = Math.floor(hue * 6);
+        const f = hue * 6 - i;
+        const q = 1 - f;
+        
+        let r, g, b;
+        switch (i % 6) {
+          case 0: r = 1; g = f; b = 0; break;
+          case 1: r = q; g = 1; b = 0; break;
+          case 2: r = 0; g = 1; b = f; break;
+          case 3: r = 0; g = q; b = 1; break;
+          case 4: r = f; g = 0; b = 1; break;
+          default: r = 1; g = 0; b = q;
+        }
+        
+        const idx = (y % 2 === 0) ? y * w + x : y * w + (w - 1 - x);
+        channel.array[idx] = (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
       }
-      
-      channel.array[i] = (Math.round((r + m) * 255) << 16) | 
-                         (Math.round((g + m) * 255) << 8) | 
-                         Math.round((b + m) * 255);
     }
     
     ws281x.render();
-    
-    if (Date.now() - start >= duration) {
-      clearInterval(interval);
-    }
+    if (Date.now() - start >= duration) clearInterval(interval);
   }, 16);
 };

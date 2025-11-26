@@ -270,7 +270,8 @@ function runScreen(change) {
 
     } else if (change.plasma) {
       // Magic rainbow plasma
-      done(plasma(change.plasma));
+      const params = typeof change.plasma === 'object' ? change.plasma : {};
+      done(plasma(params));
     } else if (change.power) {
       // Shut down/restart!
       done(hostPower(change.power));
@@ -563,6 +564,11 @@ function plasma({
   currentPlasmaParams.modA = modA;
   currentPlasmaParams.modB = modB;
   currentPlasmaParams.modC = modC;
+  
+  // Save actual params to globalState so presets capture them
+  if (globalState.mode === 'plasma') {
+    globalState.options = { modA, modB, modC, plasmaBrightness };
+  }
   var w = canvas.width;
   var h = canvas.height;
   var buffer = new Array(h);
