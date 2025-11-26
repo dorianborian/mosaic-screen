@@ -3,6 +3,7 @@
  */
 const { SimpleCanvas } = require('./src/lib/simple-canvas');
 const createCanvas = (w, h) => new SimpleCanvas(w, h);
+const pixelTest = require('./src/utils/pixel-test');
 
 // Load PNG sprite sheets
 const loadImage = (path) => {
@@ -785,17 +786,9 @@ try {
   
   console.log("GPIO NeoPixel initialized!");
   
-  // Test: Set first 5 pixels to red
   if (channel) {
-    console.log('Testing first 5 pixels red...');
-    for (let i = 0; i < 5; i++) {
-      channel.array[i] = 0xFF0000; // Red
-    }
-    ws281x.render();
-    
-    setTimeout(() => {
-      console.log('Test complete, starting normal rendering...');
-    }, 2000);
+    console.log('Running pixel test animation...');
+    pixelTest(channel, ws281x, 2000);
   }
 } catch (err) {
   console.log('GPIO initialization skipped - dev mode');
