@@ -1,4 +1,5 @@
 import { html, render } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import './components/icon-loader.js';
 import './components/global-controls.js';
 import './components/text-overlay.js';
 import './components/tabbed-modes.js';
@@ -6,6 +7,7 @@ import './components/animations.js';
 import './components/plasma-3d-controls.js';
 import './components/ball-controls.js';
 import './components/color-controls.js';
+import './components/shuffle-controls.js';
 import './components/power-controls.js';
 import { LiveView } from './components/live-view.js';
 
@@ -30,6 +32,7 @@ const appTemplate = html`
         <plasma-3d-controls slot="plasma"></plasma-3d-controls>
         <ball-controls slot="ball"></ball-controls>
         <color-controls slot="color"></color-controls>
+        <shuffle-controls slot="shuffle"></shuffle-controls>
       </tabbed-modes>
       <power-controls></power-controls>
     </div>

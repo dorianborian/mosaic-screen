@@ -8,16 +8,19 @@ class GlobalControls extends LitElement {
   render() {
     return html`
       <div class="box">
-        <h2>Global Controls</h2>
+        <h2><app-icon name="settings"></app-icon> Global Controls</h2>
         <label>
-          Brightness:
+          <app-icon name="sun"></app-icon> Brightness:
           <input type="range" min="1" max="254" value="100" @change=${this.onBrightness}>
         </label>
-        <button @click=${this.onStop}>Stop</button>
-        <button @click=${this.onRotate}>Rotate (5s)</button>
+        <button @click=${this.onStop}>
+          <app-icon name="square"></app-icon> Stop
+        </button>
       </div>
     `;
   }
+
+
 
   onBrightness(e) {
     fetch('/bright', {
@@ -28,7 +31,6 @@ class GlobalControls extends LitElement {
   }
 
   onStop() { post('stop'); }
-  onRotate() { post('rotate', 5); }
 }
 
 customElements.define('global-controls', GlobalControls);

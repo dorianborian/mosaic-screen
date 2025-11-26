@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 import { theme, baseStyles } from '../theme.js';
+import '../components/icon-loader.js';
 import './color-picker-wrapper.js';
 
 class TextOverlay extends LitElement {
@@ -68,7 +69,7 @@ class TextOverlay extends LitElement {
   render() {
     return html`
       <div class="box">
-        <h2>Text Overlay</h2>
+        <h2><app-icon name="type"></app-icon> Text Overlay</h2>
         <div class="grid">
           <label><input type="checkbox" ?checked=${this.enabled} @change=${e => { this.enabled = e.target.checked; this.send(); }}> Enable</label>
           <label><input type="checkbox" ?checked=${this.useClock} @change=${e => { this.useClock = e.target.checked; this.send(); }}> Use Clock</label>

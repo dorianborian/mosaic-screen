@@ -1,4 +1,7 @@
+import './preset-manager.js';
+
 export function LiveView() {
+  const container = document.createElement('div');
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 15;
   canvas.style.cssText = 'width:300px;height:300px;image-rendering:pixelated;border:2px solid #0f0';
@@ -23,5 +26,12 @@ export function LiveView() {
     ctx.putImageData(imgData, 0, 0);
   };
   
-  return canvas;
+  const presetMgr = document.createElement('preset-manager');
+  presetMgr.addEventListener('preset-saved', () => {
+    document.querySelector('shuffle-controls')?.loadPresets();
+  });
+  
+  container.appendChild(canvas);
+  container.appendChild(presetMgr);
+  return container;
 }

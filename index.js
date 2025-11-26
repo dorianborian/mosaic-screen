@@ -70,11 +70,18 @@ const ctx = canvas.getContext('2d');
 
 // Manage state.
 const stateFile = './state.json';
+const presetsDir = './presets';
+const groupsDir = './preset-groups';
 let globalState = {
   brightness: 10,
   mode: 'ball',
   options: 'red',
+  presetName: '',
 };
+
+// Ensure directories exist
+if (!fs.existsSync(presetsDir)) fs.mkdirSync(presetsDir);
+if (!fs.existsSync(groupsDir)) fs.mkdirSync(groupsDir);
 
 // Global text overlay state
 let textState = {
@@ -170,6 +177,10 @@ function readState() {
 // Save state to file
 function writeState() {
   fs.writeFileSync(stateFile, JSON.stringify({ globalState, textState }, null, 2));
+  // Broadcast will be called after WebSocket setup
+  setImmediate(() => {
+    if (typeof broadcastState === 'function') broadcastState();
+  });
 }
 
 // Setup the schedule global array from the JSON file.
@@ -262,9 +273,9 @@ function runScreen(change) {
     } else if (change.power) {
       // Shut down/restart!
       done(hostPower(change.power));
-    } else if (change.rotate) {
-      // Rotate through
-      done(rotateModes(change.rotate));
+    } else if (change.shuffle) {
+      // Shuffle through presets
+      done(shufflePresets(change.shuffle));
     } else {
       fail();
     }
@@ -309,39 +320,44 @@ function drawClock(color) {
 
 
 
-// Rotation mode.
-function rotateModes(seconds) {
+// Shuffle through preset group.
+function shufflePresets({ groupId }) {
+  const groupPath = path.join(groupsDir, `${groupId}.json`);
+  if (!fs.existsSync(groupPath)) return null;
+  
+  const group = JSON.parse(fs.readFileSync(groupPath));
+  const validPresets = group.presets.filter(name => 
+    fs.existsSync(path.join(presetsDir, `${name}.json`))
+  );
+  
+  if (validPresets.length === 0) return null;
+  
   let lastPick = null;
-  const options = [
-    { image: "heart" },
-    { image: "bird" },
-    { image: "eye" },
-    { image: "flower" },
-    { image: "fire" },
-    { image: "pumpkin" },
-    { image: "skeleton" },
-    { image: "pickaxe" },
-    { image: "nyan" },
-    { image: "maker" },
-
-    { plasma: {} },
-    { plasma: {} },
-    { plasma: {} },
-    { plasma: {} },
-  ];
-
   const pickNext = () => {
-    const pick = getRand(options.length, lastPick);
+    const pick = group.randomize ? 
+      getRand(validPresets.length, lastPick) : 
+      (lastPick === null ? 0 : (lastPick + 1) % validPresets.length);
     lastPick = pick;
-
-    clearInterval(rotationModeInterval);
-    runScreen(options[pick]).then((interval) => {
-      rotationModeInterval = interval;
-    });
+    const presetName = validPresets[pick];
+    
+    try {
+      const presetPath = path.join(presetsDir, `${presetName}.json`);
+      const preset = JSON.parse(fs.readFileSync(presetPath));
+      globalState = preset.state;
+      textState = preset.textState;
+      writeState();
+      
+      clearInterval(rotationModeInterval);
+      runScreen({ [preset.state.mode]: preset.state.options }).then((interval) => {
+        rotationModeInterval = interval;
+      });
+    } catch (err) {
+      console.error('Error loading preset:', err);
+    }
   };
 
   pickNext();
-  return setInterval(pickNext, seconds * 1000);
+  return setInterval(pickNext, group.seconds * 1000);
 }
 
 
@@ -816,11 +832,37 @@ process.on('SIGTERM', () => {
 // ======================== WebSocket Setup ====================================
 // =============================================================================
 const peekClients = new Set();
+const stateClients = new Set();
+
+// Hash state for comparison
+function hashState() {
+  const crypto = require('crypto');
+  const stateStr = JSON.stringify({ globalState, textState });
+  return crypto.createHash('md5').update(stateStr).digest('hex');
+}
+
+function broadcastState() {
+  if (stateClients.size === 0) return;
+  const msg = JSON.stringify({ hash: hashState() });
+  stateClients.forEach(ws => ws.readyState === 1 && ws.send(msg));
+}
+
+// Get current state hash
+app.get("/state-hash", (req, res) => {
+  res.json({ hash: hashState() });
+});
 
 wss.on('connection', (ws, req) => {
   if (req.url === '/peek') {
     peekClients.add(ws);
     ws.on('close', () => peekClients.delete(ws));
+    return;
+  }
+  
+  if (req.url === '/state') {
+    stateClients.add(ws);
+    ws.send(JSON.stringify({ hash: hashState() }));
+    ws.on('close', () => stateClients.delete(ws));
     return;
   }
   
@@ -869,9 +911,8 @@ httpServer.listen(serverPort, '0.0.0.0', () => {
 });
 app.use("/", express.static("./interface/"));
 
-const nm = `./node_modules`;
-
 app.use("/images", express.static(`./images/`));
+app.use("/icons", express.static(`./node_modules/lucide-static/icons`));
 app.use(express.json());
 
 // Peek interface
@@ -879,8 +920,13 @@ app.get("/peek", (req, res) => {
   res.sendFile(path.join(__dirname, 'interface', 'peek.html'));
 });
 
-// Raw matrix data API
+// Raw matrix data API - returns current rendered frame with overlays
 app.get("/matrix", (req, res) => {
+  // Force a render to ensure we have the latest frame with text overlay
+  if (animBuffer) ctx.pixels.set(animBuffer);
+  applyBackgroundFade();
+  applyTextOverlay();
+  
   const imageData = ctx.getImageData(0, 0, width, height).data;
   const matrix = [];
   for (let i = 0; i < 225; i++) {
@@ -950,4 +996,119 @@ app.delete("/schedule/:time", (req, res) => {
   removeSchedule(req.params.time);
   res.set("Content-Type", "application/json; charset=UTF-8");
   res.send(schedule);
+});
+
+// Get all presets.
+app.get("/presets", (req, res) => {
+  const presets = [];
+  if (fs.existsSync(presetsDir)) {
+    const files = fs.readdirSync(presetsDir);
+    files.forEach(file => {
+      if (file.endsWith('.json')) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(presetsDir, file)));
+          presets.push({ name: data.name, preview: data.preview, hash: data.hash });
+        } catch (err) {
+          console.error('Error reading preset:', err);
+        }
+      }
+    });
+  }
+  res.json(presets);
+});
+
+// Save a preset.
+app.post("/presets", (req, res) => {
+  const { name, matrix } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name required' });
+  
+  const { PNG } = require('pngjs');
+  const png = new PNG({ width: 15, height: 15 });
+  
+  for (let i = 0; i < matrix.pixels.length; i++) {
+    const [r, g, b] = matrix.pixels[i];
+    png.data[i * 4] = r;
+    png.data[i * 4 + 1] = g;
+    png.data[i * 4 + 2] = b;
+    png.data[i * 4 + 3] = 255;
+  }
+  
+  const preview = PNG.sync.write(png).toString('base64');
+  const preset = {
+    name,
+    preview,
+    hash: hashState(),
+    state: { ...globalState, presetName: name },
+    textState: { ...textState }
+  };
+  
+  fs.writeFileSync(path.join(presetsDir, `${name}.json`), JSON.stringify(preset, null, 2));
+  res.json({ status: 'ok' });
+});
+
+// Load a preset
+app.post("/presets/:name/load", (req, res) => {
+  const presetPath = path.join(presetsDir, `${req.params.name}.json`);
+  if (fs.existsSync(presetPath)) {
+    const preset = JSON.parse(fs.readFileSync(presetPath));
+    globalState = preset.state;
+    textState = preset.textState;
+    setFromState(globalState);
+    res.json({ status: 'ok' });
+  } else {
+    res.status(404).json({ error: 'Preset not found' });
+  }
+});
+
+// Delete a preset.
+app.delete("/presets/:name", (req, res) => {
+  const presetPath = path.join(presetsDir, `${req.params.name}.json`);
+  if (fs.existsSync(presetPath)) {
+    fs.unlinkSync(presetPath);
+    // Clean up groups
+    if (fs.existsSync(groupsDir)) {
+      fs.readdirSync(groupsDir).forEach(file => {
+        const groupPath = path.join(groupsDir, file);
+        const group = JSON.parse(fs.readFileSync(groupPath));
+        group.presets = group.presets.filter(p => p !== req.params.name);
+        fs.writeFileSync(groupPath, JSON.stringify(group, null, 2));
+      });
+    }
+  }
+  res.json({ status: 'ok' });
+});
+
+// Get preset groups
+app.get("/preset-groups", (req, res) => {
+  const groups = [];
+  if (fs.existsSync(groupsDir)) {
+    fs.readdirSync(groupsDir).forEach(file => {
+      if (file.endsWith('.json')) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(groupsDir, file)));
+          groups.push(data);
+        } catch (err) {
+          console.error('Error reading group:', err);
+        }
+      }
+    });
+  }
+  res.json(groups);
+});
+
+// Save preset group
+app.post("/preset-groups", (req, res) => {
+  const group = req.body;
+  if (!group.id) return res.status(400).json({ error: 'ID required' });
+  fs.writeFileSync(path.join(groupsDir, `${group.id}.json`), JSON.stringify(group, null, 2));
+  res.json({ status: 'ok' });
+});
+
+// Delete preset group
+app.delete("/preset-groups/:id", (req, res) => {
+  const groupPath = path.join(groupsDir, `${req.params.id}.json`);
+  if (fs.existsSync(groupPath)) {
+    fs.unlinkSync(groupPath);
+  }
+  res.json({ status: 'ok' });
 });

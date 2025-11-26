@@ -30,6 +30,14 @@ export const baseStyles = css`
     margin: 0 0 var(--spacing-md) 0;
     font-size: 1.25rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h2 svg {
+    width: 20px;
+    height: 20px;
   }
 
   label {
@@ -48,6 +56,14 @@ export const baseStyles = css`
     cursor: pointer;
     font-size: 0.9rem;
     transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  button svg {
+    width: 16px;
+    height: 16px;
   }
 
   button:hover {

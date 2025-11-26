@@ -63,3 +63,7 @@ typings/
 # Schedule and state files
 schedule.json
 state.json
+
+# Presets
+presets/
+preset-groups/

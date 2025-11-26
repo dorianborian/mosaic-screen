@@ -13,7 +13,7 @@ A high-performance NeoPixel display controller for Raspberry Pi, streaming at 30
 - **Digital Clock** - 12-hour clock display with AM/PM indicator
 - **Plasma Effects** - Real-time animated plasma with customizable parameters
 - **Solid Colors** - Simple solid color display
-- **Rotation Mode** - Auto-rotate through multiple display modes
+- **Shuffle Mode** - Auto-shuffle through saved presets
 
 ### Text Overlay System
 - **Multiple Fonts** - Mini (5px), Medium (6px), and Big (13px) fonts
@@ -25,8 +25,9 @@ A high-performance NeoPixel display controller for Raspberry Pi, streaming at 30
 - **Positioning** - Precise X/Y positioning for static text
 
 ### Control & Automation
-- **Web Interface** - Full-featured browser-based control panel
+- **Web Interface** - Full-featured browser-based control panel with icons
 - **Live Preview** - Real-time display preview in browser
+- **Preset System** - Save and manage display state presets with thumbnails
 - **Brightness Control** - Adjustable LED brightness (0-255)
 - **Scheduler** - Time-based automation for display modes
 - **Remote Power** - Shutdown/restart Raspberry Pi from web interface
@@ -140,7 +141,7 @@ mosaic-screen-d/
   { "ball": "#ff0000" }
   { "color": "#00ff00" }
   { "plasma": {} }
-  { "rotate": 10 }
+  { "shuffle": ["preset1", "preset2"] }
   { "stop": true }
   ```
 
@@ -180,6 +181,14 @@ mosaic-screen-d/
   ```
 - `PUT /schedule/:time` - Activate scheduled state
 - `DELETE /schedule/:time` - Remove scheduled state
+
+### Presets
+- `GET /presets` - Get all saved presets
+- `POST /presets` - Save a new preset
+  ```json
+  { "name": "My Preset", "matrix": {...} }
+  ```
+- `DELETE /presets/:name` - Delete a preset
 
 ### Live Preview
 - `GET /peek` - Live preview interface
