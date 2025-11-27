@@ -56,6 +56,8 @@ class SimpleCanvas {
   }
 
   fillText(text, x, y) {
+    if (!text || typeof text !== 'string') return;
+    
     const color = this.hexToRgb(this.fillStyle);
     let fontData;
     
@@ -166,6 +168,8 @@ class SimpleCanvas {
   }
 
   measureText(text) {
+    if (!text || typeof text !== 'string') return { width: 0 };
+    
     let fontData;
     if (this.font.includes('big')) {
       fontData = fonts.big;

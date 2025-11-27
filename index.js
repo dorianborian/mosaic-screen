@@ -346,7 +346,18 @@ function shufflePresets({ groupId }) {
       const presetPath = path.join(presetsDir, `${presetName}.json`);
       const preset = JSON.parse(fs.readFileSync(presetPath));
       globalState = preset.state;
-      textState = preset.textState;
+      textState = Object.assign({
+        enabled: false,
+        text: '',
+        font: 'medium',
+        color: '#000000ff',
+        scroll: false,
+        speed: 2,
+        bgColor: '#000000cc',
+        useClock: false,
+        invert: false,
+        x: 0
+      }, preset.textState || {});
       writeState();
       
       clearInterval(rotationModeInterval);
@@ -1051,7 +1062,18 @@ app.post("/presets/:name/load", (req, res) => {
   if (fs.existsSync(presetPath)) {
     const preset = JSON.parse(fs.readFileSync(presetPath));
     globalState = preset.state;
-    textState = preset.textState;
+    textState = Object.assign({
+      enabled: false,
+      text: '',
+      font: 'medium',
+      color: '#000000ff',
+      scroll: false,
+      speed: 2,
+      bgColor: '#000000cc',
+      useClock: false,
+      invert: false,
+      x: 0
+    }, preset.textState || {});
     setFromState(globalState);
     res.json({ status: 'ok' });
   } else {
