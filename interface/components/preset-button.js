@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+import './icon-button.js';
 
 class PresetButton extends LitElement {
   static styles = css`
@@ -7,12 +8,9 @@ class PresetButton extends LitElement {
     .preset-btn.current { outline: 3px solid #0f0; }
     .preset-btn.dragging { opacity: 0.5; }
     .preset-name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); padding: 4px; font-size: 0.7rem; text-align: center; color: white; border-radius: 0 0 7px 7px; }
-    .delete-btn { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; padding: 0; background: rgba(255,0,0,0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; z-index: 10; }
-    .delete-btn img { width: 12px; height: 12px; filter: brightness(0) invert(1); }
-    .update-btn { position: absolute; top: 2px; right: 26px; width: 20px; height: 20px; padding: 0; background: rgba(0,150,255,0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; z-index: 10; }
-    .update-btn img { width: 12px; height: 12px; filter: brightness(0) invert(1); }
     .move-icon { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: rgba(100,150,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .move-icon img { width: 12px; height: 12px; }
+    icon-button { position: absolute; z-index: 10; }
   `;
 
   static properties = {
@@ -29,7 +27,7 @@ class PresetButton extends LitElement {
   }
 
   handleClick(e) {
-    if (e.target.closest('.delete-btn') || e.target.closest('.update-btn')) return;
+    if (e.target.closest('icon-button')) return;
     this.dispatchEvent(new CustomEvent('preset-click', { bubbles: true, composed: true }));
   }
 
@@ -64,12 +62,8 @@ class PresetButton extends LitElement {
         @dragend=${this.handleDragEnd}>
         ${this.showMove ? html`<app-icon class="move-icon" name="move"></app-icon>` : ''}
         <span class="preset-name">${this.name}</span>
-        <button class="update-btn" @click=${this.handleUpdate}>
-          <app-icon name="refresh-cw"></app-icon>
-        </button>
-        <button class="delete-btn" @click=${this.handleDelete}>
-          <app-icon name="trash-2"></app-icon>
-        </button>
+        <icon-button icon="refresh-cw" color="rgba(0,150,255,0.8)" style="top: 3px; right: 27px;" @click=${this.handleUpdate}></icon-button>
+        <icon-button icon="trash-2" color="rgba(255,0,0,0.8)" style="top: 3px; right: 3px;" @click=${this.handleDelete}></icon-button>
       </button>
     `;
   }

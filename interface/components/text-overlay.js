@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/co
 import { theme, baseStyles } from '../theme.js';
 import '../components/icon-loader.js';
 import './color-picker-wrapper.js';
+import './icon-button.js';
 
 class TextOverlay extends LitElement {
   createRenderRoot() {
@@ -18,7 +19,9 @@ class TextOverlay extends LitElement {
     bgColor: { type: String },
     useClock: { type: Boolean },
     invert: { type: Boolean },
-    expanded: { type: Boolean }
+    expanded: { type: Boolean },
+    x: { type: Number },
+    y: { type: Number }
   };
 
   constructor() {
@@ -33,6 +36,8 @@ class TextOverlay extends LitElement {
     this.useClock = false;
     this.invert = false;
     this.expanded = false;
+    this.x = 0;
+    this.y = 0;
     this.loadState();
   }
 
@@ -63,9 +68,22 @@ class TextOverlay extends LitElement {
         speed: this.speed,
         bgColor: this.bgColor,
         useClock: this.useClock,
-        invert: this.invert
+        invert: this.invert,
+        x: this.x,
+        y: this.y
       })
     });
+  }
+
+  handleJoystick(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const x = e.clientX - rect.left - centerX;
+    const y = e.clientY - rect.top - centerY;
+    this.x = Math.round(Math.max(-7, Math.min(7, x / 10)));
+    this.y = Math.round(Math.max(-7, Math.min(7, y / 10)));
+    this.send();
   }
 
   render() {
@@ -96,6 +114,14 @@ class TextOverlay extends LitElement {
             </div>
             <label><input type="checkbox" ?checked=${this.scroll} @change=${e => { this.scroll = e.target.checked; this.send(); }} ?disabled=${this.useClock}> Scroll</label>
             <label>Speed: <input type="range" min="1" max="5" .value=${this.speed} @change=${e => { this.speed = parseInt(e.target.value); this.send(); }} ?disabled=${!this.scroll || this.useClock}> ${this.speed}</label>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 11px; opacity: 0.8; min-width: 100px;">Position (X: ${this.x}, Y: ${this.y})</span>
+              <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 8px; position: relative; cursor: crosshair; flex-shrink: 0;" @mousedown=${this.handleJoystick} @mousemove=${(e) => e.buttons && this.handleJoystick(e)}>
+                <icon-button icon="rotate-ccw" style="position: absolute; top: 4px; right: 4px;" @click=${(e) => { e.stopPropagation(); this.x = 0; this.y = 0; this.send(); }}></icon-button>
+                <div style="position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; background: #666; transform: translate(-50%, -50%);"></div>
+                <div style="position: absolute; top: calc(50% + ${this.y * 5}px); left: calc(50% + ${this.x * 5}px); width: 10px; height: 10px; background: #0f0; border-radius: 50%; transform: translate(-50%, -50%);"></div>
+              </div>
+            </div>
           </div>
           <label><input type="checkbox" ?checked=${this.invert} @change=${e => { this.invert = e.target.checked; this.send(); }}> Invert</label>
           <div class="full" style="display:flex;gap:20px">

@@ -493,16 +493,17 @@ function applyTextOverlay() {
   
   if (textState.scroll && !textState.useClock) {
     const textSize = tempCtx.measureText(displayText);
-    const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2);
+    const y = Math.floor((height - (textState.font === 'big' ? 13 : textState.font === 'medium' ? 6 : 5)) / 2) + (textState.y || 0);
     tempCtx.fillText(displayText, Math.floor(scrollX), y);
     scrollX -= textState.speed / 10;
     if (scrollX < -textSize.width) scrollX = width;
   } else {
     const lines = displayText.split('\n');
+    const xOffset = textState.useClock ? 2 : 0;
     const yOffset = textState.useClock ? 1 : 0;
     lines.forEach((line, i) => {
       const lineHeight = textState.font === 'big' ? 13 : textState.font === 'medium' ? 7 : 6;
-      tempCtx.fillText(line, textState.x, yOffset + i * lineHeight);
+      tempCtx.fillText(line, xOffset + (textState.x || 0), yOffset + (textState.y || 0) + i * lineHeight);
     });
   }
   
