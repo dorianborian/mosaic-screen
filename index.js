@@ -149,7 +149,7 @@ function getTime() {
 function updateStateFromChange(change) {
   const key = Object.keys(change)[0];
 
-  if (key) {
+  if (key && key !== 'power' && key !== 'stop') {
     globalState.mode = key;
     globalState.options = change[key];
     writeState();
