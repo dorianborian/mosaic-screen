@@ -132,9 +132,18 @@ class Plasma3DControls extends LitElement {
   }
 
   updateParamsFromRotation() {
-    const newA = Math.max(0.1, Math.min(64, ((this.rotation.x + Math.PI) / (Math.PI * 2)) * 64));
-    const newB = Math.max(0.1, Math.min(64, ((this.rotation.y + Math.PI) / (Math.PI * 2)) * 64));
-    const newC = Math.max(0.1, Math.min(64, (Math.abs(this.rotation.x) + Math.abs(this.rotation.y)) / 2 * 10));
+    const mapRotation = (angle) => {
+      const normalized = ((angle % (Math.PI * 4)) + Math.PI * 4) % (Math.PI * 4);
+      if (normalized <= Math.PI * 2) {
+        return (normalized / (Math.PI * 2)) * 64;
+      } else {
+        return ((Math.PI * 4 - normalized) / (Math.PI * 2)) * 64;
+      }
+    };
+    
+    const newA = Math.max(0.1, Math.min(64, mapRotation(this.rotation.x)));
+    const newB = Math.max(0.1, Math.min(64, mapRotation(this.rotation.y)));
+    const newC = Math.max(0.1, Math.min(64, (mapRotation(this.rotation.x) + mapRotation(this.rotation.y)) / 2));
     
     this.modA = newA;
     this.modB = newB;
@@ -146,8 +155,8 @@ class Plasma3DControls extends LitElement {
   }
 
   updateRotationFromParams() {
-    this.rotation.x = (this.modA / 64) * (Math.PI * 2) - Math.PI;
-    this.rotation.y = (this.modB / 64) * (Math.PI * 2) - Math.PI;
+    this.rotation.x = (this.modA / 64) * (Math.PI * 2);
+    this.rotation.y = (this.modB / 64) * (Math.PI * 2);
   }
 
   connectedCallback() {
