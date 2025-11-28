@@ -366,11 +366,11 @@ function shufflePresets({ groupId }) {
   
   if (validPresets.length === 0) return null;
   
-  let lastPick = null;
+  let lastPick = -1;
   const pickNext = () => {
     const pick = group.randomize ? 
       getRand(validPresets.length, lastPick) : 
-      (lastPick === null ? 0 : (lastPick + 1) % validPresets.length);
+      (lastPick + 1) % validPresets.length;
     lastPick = pick;
     const presetHash = validPresets[pick];
     
