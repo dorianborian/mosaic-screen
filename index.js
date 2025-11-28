@@ -361,7 +361,7 @@ function shufflePresets({ groupId }) {
   }
   
   const validPresets = group.presets.filter(hash => 
-    fs.existsSync(path.join(presetsDir, `${hash}.json`))
+    hash === '__random__' || fs.existsSync(path.join(presetsDir, `${hash}.json`))
   );
   
   if (validPresets.length === 0) return null;
@@ -375,29 +375,39 @@ function shufflePresets({ groupId }) {
     const presetHash = validPresets[pick];
     
     try {
-      const presetPath = path.join(presetsDir, `${presetHash}.json`);
-      const preset = JSON.parse(fs.readFileSync(presetPath));
-      globalState = preset.state || globalState;
-      textState = Object.assign({
-        enabled: false,
-        text: '',
-        font: 'medium',
-        color: '#000000ff',
-        scroll: false,
-        speed: 2,
-        bgColor: '#000000cc',
-        useClock: false,
-        invert: false,
-        x: 0
-      }, preset.textState || {});
-      writeState();
-      
-      clearInterval(rotationModeInterval);
-      runScreen({ [preset.state.mode]: preset.state.options }).then((interval) => {
-        rotationModeInterval = interval;
-      }).catch(err => {
-        console.error('Error running screen:', err);
-      });
+      if (presetHash === '__random__') {
+        clearInterval(rotationModeInterval);
+        runScreen({ image: 'random' }).then((interval) => {
+          rotationModeInterval = interval;
+        }).catch(err => {
+          console.error('Error running screen:', err);
+        });
+      } else {
+        const presetPath = path.join(presetsDir, `${presetHash}.json`);
+        const preset = JSON.parse(fs.readFileSync(presetPath));
+        globalState = preset.state || globalState;
+        textState = Object.assign({
+          enabled: false,
+          text: '',
+          font: 'medium',
+          color: '#000000ff',
+          scroll: false,
+          speed: 2,
+          bgColor: '#000000cc',
+          useClock: false,
+          invert: false,
+          x: 0,
+          y: 0
+        }, preset.textState || {});
+        writeState();
+        
+        clearInterval(rotationModeInterval);
+        runScreen({ [preset.state.mode]: preset.state.options }).then((interval) => {
+          rotationModeInterval = interval;
+        }).catch(err => {
+          console.error('Error running screen:', err);
+        });
+      }
     } catch (err) {
       console.error('Error loading preset:', err);
     }
@@ -529,7 +539,40 @@ function applyTextOverlay() {
 
 // Animate a horizontal sprite sheet image over 15px square.
 let animBuffer = null;
+let randomAnimInterval = null;
 function animImage(name) {
+  if (name === 'random') {
+    const imageNames = Object.keys(appData.images);
+    let currentName = imageNames[Math.floor(Math.random() * imageNames.length)];
+    let currentInterval = null;
+    
+    const switchAnim = () => {
+      clearInterval(currentInterval);
+      currentName = imageNames[Math.floor(Math.random() * imageNames.length)];
+      const { fps } = appData.images[currentName];
+      
+      loadImage(`${animPath}/${currentName}_${fps}.gif`).then((image) => {
+        const frames = Math.floor(image.width / width);
+        let frame = 0;
+        const tempCanvas = createCanvas(width, height);
+        const tempCtx = tempCanvas.getContext('2d');
+        animBuffer = tempCanvas.pixels;
+        
+        currentInterval = setInterval(() => {
+          if (frame >= frames) frame = 0;
+          if (image.data && image.data.length > 0) {
+            tempCtx.drawImage(image, frame * 15, 0, 15, 15, 0, 0, 15, 15);
+          }
+          frame++;
+        }, Math.round(1000 / fps));
+      });
+    };
+    
+    switchAnim();
+    randomAnimInterval = setInterval(switchAnim, 10000);
+    return Promise.resolve(randomAnimInterval);
+  }
+  
   if (!appData.images[name]) {
     name = "fire";
   }
@@ -1050,7 +1093,15 @@ app.delete("/schedule/:time", (req, res) => {
 
 // Get all presets.
 app.get("/presets", (req, res) => {
-  const presets = [];
+  const presets = [
+    {
+      name: 'Random Animation',
+      hash: '__random__',
+      preview: 'iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAAP0lEQVR4nGNgGAWjYBSMAjwgPj7+PwMDA8N/fBgkBgYG/0FiYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYBgFQwsAAKmzBf/8/f8AAAAASUVORK5CYII=',
+      builtin: true
+    }
+  ];
+  
   if (fs.existsSync(presetsDir)) {
     const files = fs.readdirSync(presetsDir);
     files.forEach(file => {
@@ -1111,6 +1162,11 @@ app.post("/presets", (req, res) => {
 
 // Load a preset
 app.post("/presets/:hash/load", (req, res) => {
+  if (req.params.hash === '__random__') {
+    changeScreen({ image: 'random' });
+    return res.json({ status: 'ok' });
+  }
+  
   const presetPath = path.join(presetsDir, `${req.params.hash}.json`);
   if (fs.existsSync(presetPath)) {
     try {
@@ -1126,7 +1182,8 @@ app.post("/presets/:hash/load", (req, res) => {
         bgColor: '#000000cc',
         useClock: false,
         invert: false,
-        x: 0
+        x: 0,
+        y: 0
       }, preset.textState || {});
       setFromState(globalState);
       res.json({ status: 'ok' });
@@ -1159,6 +1216,10 @@ app.put("/presets/:hash", (req, res) => {
 
 // Delete a preset.
 app.delete("/presets/:hash", (req, res) => {
+  if (req.params.hash === '__random__') {
+    return res.status(400).json({ error: 'Cannot delete builtin preset' });
+  }
+  
   const presetPath = path.join(presetsDir, `${req.params.hash}.json`);
   if (fs.existsSync(presetPath)) {
     fs.unlinkSync(presetPath);

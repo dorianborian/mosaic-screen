@@ -70,11 +70,25 @@ class ShuffleControls extends LitElement {
   }
 
   async deletePreset(hash) {
+    if (hash === '__random__') return;
     const preset = this.presets.find(p => p.hash === hash);
     if (!confirm(`Delete preset "${preset?.name}"?`)) return;
     await fetch(`/presets/${hash}`, { method: 'DELETE' });
     this.loadPresets();
     this.loadGroups();
+  }
+
+  async updatePreset(hash) {
+    if (hash === '__random__') return;
+    const preset = this.presets.find(p => p.hash === hash);
+    if (!confirm(`Update preset "${preset?.name}" with current state?`)) return;
+    const matrix = await fetch('/matrix').then(r => r.json());
+    await fetch('/presets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: preset.name, matrix, hash })
+    });
+    this.loadPresets();
   }
 
   async updatePreset(hash) {
