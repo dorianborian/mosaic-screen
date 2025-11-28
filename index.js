@@ -376,6 +376,8 @@ function shufflePresets({ groupId }) {
     
     try {
       if (presetHash === '__random__') {
+        textState.enabled = false;
+        writeState();
         clearInterval(rotationModeInterval);
         runScreen({ image: 'random' }).then((interval) => {
           rotationModeInterval = interval;
@@ -1163,6 +1165,8 @@ app.post("/presets", (req, res) => {
 // Load a preset
 app.post("/presets/:hash/load", (req, res) => {
   if (req.params.hash === '__random__') {
+    textState.enabled = false;
+    writeState();
     changeScreen({ image: 'random' });
     return res.json({ status: 'ok' });
   }
