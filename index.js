@@ -265,6 +265,10 @@ function runScreen(change) {
       // Unified rsolve handler for confirming state.
       function done(intervalID) {
         updateStateFromChange(change);
+        // Capture plasma params after mode is set
+        if (change.plasma && globalState.mode === 'plasma') {
+          globalState.options = { ...currentPlasmaParams };
+        }
         resolve(intervalID);
       }
 
@@ -598,7 +602,7 @@ function changeColor(color) {
 }
 
 // Run the random plasma animation at 60fps.
-let currentPlasmaParams = { modA: 32, modB: 32, modC: 32 };
+let currentPlasmaParams = { modA: 32, modB: 32, modC: 32, plasmaBrightness: 1.0 };
 let plasmaInterval = null;
 function plasma({ 
   modA = Math.random() * 64, 
@@ -609,11 +613,7 @@ function plasma({
   currentPlasmaParams.modA = modA;
   currentPlasmaParams.modB = modB;
   currentPlasmaParams.modC = modC;
-  
-  // Save actual params to globalState so presets capture them
-  if (globalState.mode === 'plasma') {
-    globalState.options = { modA, modB, modC, plasmaBrightness };
-  }
+  currentPlasmaParams.plasmaBrightness = plasmaBrightness;
   var w = canvas.width;
   var h = canvas.height;
   var buffer = new Array(h);
