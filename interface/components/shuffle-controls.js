@@ -77,6 +77,18 @@ class ShuffleControls extends LitElement {
     this.loadGroups();
   }
 
+  async updatePreset(hash) {
+    const preset = this.presets.find(p => p.hash === hash);
+    if (!confirm(`Update preset "${preset?.name}" with current state?`)) return;
+    const matrix = await fetch('/matrix').then(r => r.json());
+    await fetch('/presets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: preset.name, matrix, hash })
+    });
+    this.loadPresets();
+  }
+
   addGroup() {
     const id = Date.now().toString();
     this.groups.push({ id, name: 'New Group', presets: [], seconds: 10, randomize: false });
@@ -186,6 +198,7 @@ class ShuffleControls extends LitElement {
               showMove
               @preset-click=${() => this.loadPreset(p.hash)}
               @preset-delete=${() => this.deletePreset(p.hash)}
+              @preset-update=${() => this.updatePreset(p.hash)}
               @preset-dragstart=${(e) => this.onDragStart(p.hash, null, e.detail.event)}
               @preset-dragend=${(e) => this.onDragEnd(e.detail.event)}>
             </app-preset>
@@ -216,6 +229,7 @@ class ShuffleControls extends LitElement {
                     preview=${preset.preview}
                     @preset-click=${() => this.loadPreset(pHash)}
                     @preset-delete=${() => this.removeFromGroup(g, pHash)}
+                    @preset-update=${() => this.updatePreset(pHash)}
                     @preset-dragstart=${(e) => this.onDragStart(pHash, g.id, e.detail.event)}
                     @preset-dragend=${(e) => this.onDragEnd(e.detail.event)}>
                   </app-preset>
