@@ -168,9 +168,23 @@ function readState() {
     try {
       const data = JSON.parse(fs.readFileSync(stateFile));
       if (data.globalState) globalState = data.globalState;
-      if (data.textState) textState = data.textState;
+      if (data.textState) {
+        textState = Object.assign({
+          enabled: false,
+          text: '',
+          font: 'medium',
+          color: '#000000ff',
+          scroll: false,
+          speed: 2,
+          bgColor: '#000000cc',
+          useClock: false,
+          invert: false,
+          x: 0
+        }, data.textState);
+      }
     } catch (error) {
       console.error('Problem loading state file:', error);
+      fs.renameSync(stateFile, `${stateFile}.backup-${Date.now()}`);
     }
   }
 }
@@ -245,41 +259,46 @@ function checkSetStateFromSchedule() {
 // Handler for running a change, returns a promise that resolves the interval.
 function runScreen(change) {
   return new Promise((resolve, fail) => {
-    animBuffer = null;
-    
-    // Unified rsolve handler for confirming state.
-    function done(intervalID) {
-      updateStateFromChange(change);
-      resolve(intervalID);
-    }
+    try {
+      animBuffer = null;
+      
+      // Unified rsolve handler for confirming state.
+      function done(intervalID) {
+        updateStateFromChange(change);
+        resolve(intervalID);
+      }
 
-    // Stop and clear all.
-    if (change.stop) {
-      clearScreen();
-      done(null);
-    } else if (change.image) {
-      // Set an animated image
-      animImage(change.image).then(done);
-    } else if (change.ball) {
-      // Bounce the ball
-      done(ballBounce(change.ball));
+      // Stop and clear all.
+      if (change.stop) {
+        clearScreen();
+        done(null);
+      } else if (change.image) {
+        // Set an animated image
+        animImage(change.image).then(done).catch(fail);
+      } else if (change.ball) {
+        // Bounce the ball
+        done(ballBounce(change.ball));
 
-    } else if (change.color) {
-      // Solid color!
-      done(changeColor(change.color));
+      } else if (change.color) {
+        // Solid color!
+        done(changeColor(change.color));
 
-    } else if (change.plasma) {
-      // Magic rainbow plasma
-      const params = typeof change.plasma === 'object' ? change.plasma : {};
-      done(plasma(params));
-    } else if (change.power) {
-      // Shut down/restart!
-      done(hostPower(change.power));
-    } else if (change.shuffle) {
-      // Shuffle through presets
-      done(shufflePresets(change.shuffle));
-    } else {
-      fail();
+      } else if (change.plasma) {
+        // Magic rainbow plasma
+        const params = typeof change.plasma === 'object' ? change.plasma : {};
+        done(plasma(params));
+      } else if (change.power) {
+        // Shut down/restart!
+        done(hostPower(change.power));
+      } else if (change.shuffle) {
+        // Shuffle through presets
+        done(shufflePresets(change.shuffle));
+      } else {
+        fail(new Error('Unknown change type'));
+      }
+    } catch (err) {
+      console.error('Error in runScreen:', err);
+      fail(err);
     }
   });
 }
@@ -322,14 +341,27 @@ function drawClock(color) {
 
 
 
+// Generate hash for preset ID
+function generatePresetHash(name) {
+  const crypto = require('crypto');
+  return crypto.createHash('md5').update(`${name}-${Date.now()}`).digest('hex').substring(0, 12);
+}
+
 // Shuffle through preset group.
 function shufflePresets({ groupId }) {
   const groupPath = path.join(groupsDir, `${groupId}.json`);
   if (!fs.existsSync(groupPath)) return null;
   
-  const group = JSON.parse(fs.readFileSync(groupPath));
-  const validPresets = group.presets.filter(name => 
-    fs.existsSync(path.join(presetsDir, `${name}.json`))
+  let group;
+  try {
+    group = JSON.parse(fs.readFileSync(groupPath));
+  } catch (err) {
+    console.error('Error reading group:', err);
+    return null;
+  }
+  
+  const validPresets = group.presets.filter(hash => 
+    fs.existsSync(path.join(presetsDir, `${hash}.json`))
   );
   
   if (validPresets.length === 0) return null;
@@ -340,12 +372,12 @@ function shufflePresets({ groupId }) {
       getRand(validPresets.length, lastPick) : 
       (lastPick === null ? 0 : (lastPick + 1) % validPresets.length);
     lastPick = pick;
-    const presetName = validPresets[pick];
+    const presetHash = validPresets[pick];
     
     try {
-      const presetPath = path.join(presetsDir, `${presetName}.json`);
+      const presetPath = path.join(presetsDir, `${presetHash}.json`);
       const preset = JSON.parse(fs.readFileSync(presetPath));
-      globalState = preset.state;
+      globalState = preset.state || globalState;
       textState = Object.assign({
         enabled: false,
         text: '',
@@ -363,6 +395,8 @@ function shufflePresets({ groupId }) {
       clearInterval(rotationModeInterval);
       runScreen({ [preset.state.mode]: preset.state.options }).then((interval) => {
         rotationModeInterval = interval;
+      }).catch(err => {
+        console.error('Error running screen:', err);
       });
     } catch (err) {
       console.error('Error loading preset:', err);
@@ -827,6 +861,17 @@ setTimeout(() => {
 console.log('Server starting, initial state:', globalState);
 console.log(`Web interface available at http://192.168.86.57:${serverPort}`);
 
+// Global error handlers
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  // Don't exit - keep running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+  // Don't exit - keep running
+});
+
 // Cleanup on exit
 process.on('SIGINT', () => {
   ws281x.reset();
@@ -1017,7 +1062,8 @@ app.get("/presets", (req, res) => {
       if (file.endsWith('.json')) {
         try {
           const data = JSON.parse(fs.readFileSync(path.join(presetsDir, file)));
-          presets.push({ name: data.name, preview: data.preview, hash: data.hash });
+          const hash = file.replace('.json', '');
+          presets.push({ name: data.name, preview: data.preview, hash });
         } catch (err) {
           console.error('Error reading preset:', err);
         }
@@ -1029,70 +1075,102 @@ app.get("/presets", (req, res) => {
 
 // Save a preset.
 app.post("/presets", (req, res) => {
-  const { name, matrix } = req.body;
+  const { name, matrix, hash } = req.body;
   if (!name) return res.status(400).json({ error: 'Name required' });
   
-  const { PNG } = require('pngjs');
-  const png = new PNG({ width: 15, height: 15 });
-  
-  for (let i = 0; i < matrix.pixels.length; i++) {
-    const [r, g, b] = matrix.pixels[i];
-    png.data[i * 4] = r;
-    png.data[i * 4 + 1] = g;
-    png.data[i * 4 + 2] = b;
-    png.data[i * 4 + 3] = 255;
+  try {
+    const { PNG } = require('pngjs');
+    const png = new PNG({ width: 15, height: 15 });
+    
+    for (let i = 0; i < matrix.pixels.length; i++) {
+      const [r, g, b] = matrix.pixels[i];
+      png.data[i * 4] = r;
+      png.data[i * 4 + 1] = g;
+      png.data[i * 4 + 2] = b;
+      png.data[i * 4 + 3] = 255;
+    }
+    
+    const preview = PNG.sync.write(png).toString('base64');
+    const presetHash = hash || generatePresetHash(name);
+    const preset = {
+      name,
+      preview,
+      state: { ...globalState },
+      textState: { ...textState }
+    };
+    
+    fs.writeFileSync(path.join(presetsDir, `${presetHash}.json`), JSON.stringify(preset, null, 2));
+    res.json({ status: 'ok', hash: presetHash });
+  } catch (err) {
+    console.error('Error saving preset:', err);
+    res.status(500).json({ error: 'Failed to save preset' });
   }
-  
-  const preview = PNG.sync.write(png).toString('base64');
-  const preset = {
-    name,
-    preview,
-    hash: hashState(),
-    state: { ...globalState, presetName: name },
-    textState: { ...textState }
-  };
-  
-  fs.writeFileSync(path.join(presetsDir, `${name}.json`), JSON.stringify(preset, null, 2));
-  res.json({ status: 'ok' });
 });
 
 // Load a preset
-app.post("/presets/:name/load", (req, res) => {
-  const presetPath = path.join(presetsDir, `${req.params.name}.json`);
+app.post("/presets/:hash/load", (req, res) => {
+  const presetPath = path.join(presetsDir, `${req.params.hash}.json`);
   if (fs.existsSync(presetPath)) {
-    const preset = JSON.parse(fs.readFileSync(presetPath));
-    globalState = preset.state;
-    textState = Object.assign({
-      enabled: false,
-      text: '',
-      font: 'medium',
-      color: '#000000ff',
-      scroll: false,
-      speed: 2,
-      bgColor: '#000000cc',
-      useClock: false,
-      invert: false,
-      x: 0
-    }, preset.textState || {});
-    setFromState(globalState);
-    res.json({ status: 'ok' });
+    try {
+      const preset = JSON.parse(fs.readFileSync(presetPath));
+      globalState = preset.state || globalState;
+      textState = Object.assign({
+        enabled: false,
+        text: '',
+        font: 'medium',
+        color: '#000000ff',
+        scroll: false,
+        speed: 2,
+        bgColor: '#000000cc',
+        useClock: false,
+        invert: false,
+        x: 0
+      }, preset.textState || {});
+      setFromState(globalState);
+      res.json({ status: 'ok' });
+    } catch (err) {
+      console.error('Error loading preset:', err);
+      res.status(500).json({ error: 'Failed to load preset' });
+    }
+  } else {
+    res.status(404).json({ error: 'Preset not found' });
+  }
+});
+
+// Update preset name
+app.put("/presets/:hash", (req, res) => {
+  const presetPath = path.join(presetsDir, `${req.params.hash}.json`);
+  if (fs.existsSync(presetPath)) {
+    try {
+      const preset = JSON.parse(fs.readFileSync(presetPath));
+      preset.name = req.body.name;
+      fs.writeFileSync(presetPath, JSON.stringify(preset, null, 2));
+      res.json({ status: 'ok' });
+    } catch (err) {
+      console.error('Error updating preset:', err);
+      res.status(500).json({ error: 'Failed to update preset' });
+    }
   } else {
     res.status(404).json({ error: 'Preset not found' });
   }
 });
 
 // Delete a preset.
-app.delete("/presets/:name", (req, res) => {
-  const presetPath = path.join(presetsDir, `${req.params.name}.json`);
+app.delete("/presets/:hash", (req, res) => {
+  const presetPath = path.join(presetsDir, `${req.params.hash}.json`);
   if (fs.existsSync(presetPath)) {
     fs.unlinkSync(presetPath);
     // Clean up groups
     if (fs.existsSync(groupsDir)) {
       fs.readdirSync(groupsDir).forEach(file => {
-        const groupPath = path.join(groupsDir, file);
-        const group = JSON.parse(fs.readFileSync(groupPath));
-        group.presets = group.presets.filter(p => p !== req.params.name);
-        fs.writeFileSync(groupPath, JSON.stringify(group, null, 2));
+        try {
+          const groupPath = path.join(groupsDir, file);
+          const group = JSON.parse(fs.readFileSync(groupPath));
+          group.presets = group.presets.filter(p => p !== req.params.hash);
+          fs.writeFileSync(groupPath, JSON.stringify(group, null, 2));
+        } catch (err) {
+          console.error('Error updating group:', err);
+        }
       });
     }
   }

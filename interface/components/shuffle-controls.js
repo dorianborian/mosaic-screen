@@ -65,13 +65,14 @@ class ShuffleControls extends LitElement {
     };
   }
 
-  async loadPreset(name) {
-    await fetch(`/presets/${name}/load`, { method: 'POST' });
+  async loadPreset(hash) {
+    await fetch(`/presets/${hash}/load`, { method: 'POST' });
   }
 
-  async deletePreset(name) {
-    if (!confirm(`Delete preset "${name}"?`)) return;
-    await fetch(`/presets/${name}`, { method: 'DELETE' });
+  async deletePreset(hash) {
+    const preset = this.presets.find(p => p.hash === hash);
+    if (!confirm(`Delete preset "${preset?.name}"?`)) return;
+    await fetch(`/presets/${hash}`, { method: 'DELETE' });
     this.loadPresets();
     this.loadGroups();
   }
@@ -183,9 +184,9 @@ class ShuffleControls extends LitElement {
               preview=${p.preview}
               ?current=${p.hash === this.currentHash}
               showMove
-              @preset-click=${() => this.loadPreset(p.name)}
-              @preset-delete=${() => this.deletePreset(p.name)}
-              @preset-dragstart=${(e) => this.onDragStart(p.name, null, e.detail.event)}
+              @preset-click=${() => this.loadPreset(p.hash)}
+              @preset-delete=${() => this.deletePreset(p.hash)}
+              @preset-dragstart=${(e) => this.onDragStart(p.hash, null, e.detail.event)}
               @preset-dragend=${(e) => this.onDragEnd(e.detail.event)}>
             </app-preset>
           `)}
@@ -207,15 +208,15 @@ class ShuffleControls extends LitElement {
               @drop=${(e) => this.onDrop(g.id, e)}>
               ${g.presets.length === 0 ? html`
                 <div class="drop-zone">Drop presets here</div>
-              ` : g.presets.map(pName => {
-                const preset = this.presets.find(p => p.name === pName);
+              ` : g.presets.map(pHash => {
+                const preset = this.presets.find(p => p.hash === pHash);
                 return preset ? html`
                   <app-preset
-                    name=${pName}
+                    name=${preset.name}
                     preview=${preset.preview}
-                    @preset-click=${() => this.loadPreset(pName)}
-                    @preset-delete=${() => this.removeFromGroup(g, pName)}
-                    @preset-dragstart=${(e) => this.onDragStart(pName, g.id, e.detail.event)}
+                    @preset-click=${() => this.loadPreset(pHash)}
+                    @preset-delete=${() => this.removeFromGroup(g, pHash)}
+                    @preset-dragstart=${(e) => this.onDragStart(pHash, g.id, e.detail.event)}
                     @preset-dragend=${(e) => this.onDragEnd(e.detail.event)}>
                   </app-preset>
                 ` : '';

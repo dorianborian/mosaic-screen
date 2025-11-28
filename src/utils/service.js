@@ -9,6 +9,8 @@ const WORKING_DIR = require('path').join(__dirname, '..');
 const serviceContent = `[Unit]
 Description=Mosaic Screen NeoPixel Display
 After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -17,6 +19,8 @@ WorkingDirectory=${WORKING_DIR}
 ExecStart=/usr/local/bin/node ${path.join(WORKING_DIR, 'index.js')}
 Restart=on-failure
 RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -28,6 +32,7 @@ if (command === 'install') {
   fs.writeFileSync(SERVICE_PATH, serviceContent);
   execSync('systemctl daemon-reload');
   console.log(`✓ Service installed at ${SERVICE_PATH}`);
+  console.log('✓ Restart limit: 5 attempts in 5 minutes');
   console.log('Run "npm run service:enable" to start on boot');
   console.log('Run "npm run service:start" to start now');
 } else if (command === 'uninstall') {
