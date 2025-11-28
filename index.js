@@ -265,10 +265,6 @@ function runScreen(change) {
       // Unified rsolve handler for confirming state.
       function done(intervalID) {
         updateStateFromChange(change);
-        // Capture plasma params after mode is set
-        if (change.plasma && globalState.mode === 'plasma') {
-          globalState.options = { ...currentPlasmaParams };
-        }
         resolve(intervalID);
       }
 
@@ -602,18 +598,16 @@ function changeColor(color) {
 }
 
 // Run the random plasma animation at 60fps.
-let currentPlasmaParams = { modA: 32, modB: 32, modC: 32, plasmaBrightness: 1.0 };
+let currentPlasmaParams = { modA: 32, modB: 32, modC: 32 };
 let plasmaInterval = null;
 function plasma({ 
   modA = Math.random() * 64, 
   modB = Math.random() * 64, 
-  modC = Math.random() * 64,
-  plasmaBrightness = 1.0
+  modC = Math.random() * 64
 }) {
   currentPlasmaParams.modA = modA;
   currentPlasmaParams.modB = modB;
   currentPlasmaParams.modC = modC;
-  currentPlasmaParams.plasmaBrightness = plasmaBrightness;
   var w = canvas.width;
   var h = canvas.height;
   var buffer = new Array(h);
@@ -647,7 +641,7 @@ function plasma({
         value += 4 / mod[2];
         value /= 8 / mod[2];
         var hue = hueShift + (value % 1);
-        var rgb = HSVtoRGB(hue, value, value * plasmaBrightness);
+        var rgb = HSVtoRGB(hue, value, value);
         var pos = (y * w + x) * 4;
         ctx.pixels[pos] = rgb.r;
         ctx.pixels[pos + 1] = rgb.g;
@@ -1092,10 +1086,17 @@ app.post("/presets", (req, res) => {
     
     const preview = PNG.sync.write(png).toString('base64');
     const presetHash = hash || generatePresetHash(name);
+    
+    // Capture current plasma params if in plasma mode
+    const state = { ...globalState };
+    if (state.mode === 'plasma') {
+      state.options = { ...currentPlasmaParams };
+    }
+    
     const preset = {
       name,
       preview,
-      state: { ...globalState },
+      state,
       textState: { ...textState }
     };
     
